@@ -1,0 +1,4 @@
+Vercel CLI 41.4.0
+? No Project Settings found locally. Run `vercel pull` for retrieving them?
+(Y/n)[1A[83G[1B
+[?25h

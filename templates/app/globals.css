@@ -1,0 +1,15 @@
+/* templates/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add any base styles common to all themes here */
+body {
+  @apply antialiased;
+}
+
+/* Example: Add theme-specific styles via classes if Layout.tsx adds them */
+/*
+.theme-clarity { ... }
+.theme-momentum { ... }
+*/
