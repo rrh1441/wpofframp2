@@ -3,21 +3,30 @@ import fs from 'fs/promises';
 import path from 'path';
 import archiver from 'archiver';
 import { Writable } from 'stream';
-import { ThemeKey } from './constants'; // Assuming constants.ts is in the same directory
+import { ThemeKey } from './constants';
 
 interface BuildZipArgs {
-  mdxContent: string; // Full MDX content including frontmatter
   theme: ThemeKey;
-  // frontmatter: Record<string, any>; // Frontmatter is now included in mdxContent
+  homepagePosts: {
+    id: number;
+    title: string;
+    link: string;
+    excerpt: string;
+    featuredMediaUrl: string | null;
+    authorName: string;
+    date: string;
+  }[];
+  mostRecentPostMdx: string;
+  mostRecentPostTitle: string;
+  mostRecentPostSlug: string;
 }
 
-/**
- * Generates a Buffer containing a ZIP archive of a basic
- * Next.js + Tailwind + MDX project.
- */
 export async function buildZip({
-  mdxContent,
   theme,
+  homepagePosts,
+  mostRecentPostMdx,
+  mostRecentPostTitle,
+  mostRecentPostSlug,
 }: BuildZipArgs): Promise<Buffer> {
   return new Promise(async (resolve, reject) => {
     const outputBuffers: Buffer[] = [];
@@ -39,65 +48,126 @@ export async function buildZip({
       reject(new Error(`Failed to create ZIP archive: ${err.message}`));
     });
 
-    // Pipe output to our buffer converter
     archive.pipe(converter);
+
+    const templateDir = path.join(process.cwd(), 'templates');
 
     // --- Add Project Files ---
 
-    const templateDir = path.join(process.cwd(), 'templates'); // Base directory for templates
+    // 1. Homepage (app/page.tsx)
+    const homepageContent = `
+import Link from 'next/link';
+import { PostCard } from '@/components/post-card';
 
-    // 1. MDX Content (Main Page)
-    // We assume a simple structure where the migrated post becomes the main page.
-    // A slug based on the title could be generated for a more robust structure.
-    archive.append(mdxContent, { name: 'app/page.mdx' }); // Changed from index.mdx to page.mdx for App Router
+const homepagePosts = ${JSON.stringify(homepagePosts)};
 
-    // 2. Basic Layout Component (references the MDX content)
+export default function HomePage() {
+  return (
+    <main className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden p-4 md:p-8">
+      <div className="container mx-auto py-8 relative z-10">
+        <h1 className="text-2xl font-bold mb-6">Latest Posts</h1>
+        <div className="grid gap-6">
+          {homepagePosts.map((post) => (
+            <PostCard
+              key={post.id}
+              slug={\`/posts/\${post.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}\`}
+              title={post.title}
+              date={post.date}
+              author={post.authorName}
+              excerpt={post.excerpt}
+              featuredImage={post.featuredMediaUrl}
+            />
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+`;
+    archive.append(homepageContent, { name: 'app/page.tsx' });
+
+    // 2. Dynamic Post Page (app/posts/[slug]/page.tsx)
+    const postPageContent = `
+import { promises as fs } from 'fs';
+import path from 'path';
+import { compileMDX } from 'next-mdx-remote/rsc';
+import Layout from '@/components/Layout';
+
+const components = {};
+
+export async function generateStaticParams() {
+  return [{ slug: '${mostRecentPostSlug}' }];
+}
+
+export default async function PostPage({ params }: { params: { slug: string } }) {
+  const postSlug = params.slug;
+  if (postSlug !== '${mostRecentPostSlug}') {
+    return <div>Post not found</div>;
+  }
+  const mdxSource = \`${mostRecentPostMdx}\`;
+
+  const { content, frontmatter } = await compileMDX({
+    source: mdxSource,
+    components,
+    options: { parseFrontmatter: true },
+  });
+
+  return (
+    <Layout frontmatter={frontmatter}>
+      {content}
+    </Layout>
+  );
+}
+
+export async function generateMetadata() {
+  return {
+    title: '${mostRecentPostTitle}',
+  };
+}
+`;
+    archive.append(postPageContent, { name: `app/posts/${mostRecentPostSlug}/page.tsx` });
+
+    // 3. MDX Layout Component
     const layoutTemplatePath = path.join(templateDir, 'components/Layout.tsx');
     try {
-        const layoutContent = await fs.readFile(layoutTemplatePath, 'utf-8');
-        // Basic theme customization example (could be more sophisticated)
-        // const themedLayoutContent = layoutContent.replace(
-        //     /className="container mx-auto px-4 py-8"/g,
-        //     `className="container mx-auto px-4 py-8 theme-${theme}"` // Add a theme class
-        // );
-        archive.append(layoutContent, { name: 'components/Layout.tsx' });
+      const layoutContent = await fs.readFile(layoutTemplatePath, 'utf-8');
+      archive.append(layoutContent, { name: 'components/Layout.tsx' });
     } catch (err) {
-         console.warn(`Warning: Could not read template file ${layoutTemplatePath}. Skipping.`, err);
+      console.warn(`Warning: Could not read template file ${layoutTemplatePath}. Skipping.`, err);
     }
 
-     // 3. Root Layout (app/layout.tsx)
+    // 4. Root Layout (app/layout.tsx)
     const rootLayoutTemplatePath = path.join(templateDir, 'app/layout.tsx');
     try {
-        archive.file(rootLayoutTemplatePath, { name: 'app/layout.tsx' });
+      archive.file(rootLayoutTemplatePath, { name: 'app/layout.tsx' });
     } catch (err) {
-        console.warn(`Warning: Could not read template file ${rootLayoutTemplatePath}. Skipping.`, err);
+      console.warn(`Warning: Could not read template file ${rootLayoutTemplatePath}. Skipping.`, err);
     }
-
-    // 4. Root Page (app/page.tsx - Renders the MDX)
-    const rootPageTemplatePath = path.join(templateDir, 'app/page.tsx');
-     try {
-        archive.file(rootPageTemplatePath, { name: 'app/page.tsx' });
-     } catch (err) {
-         console.warn(`Warning: Could not read template file ${rootPageTemplatePath}. Skipping.`, err);
-     }
-
 
     // 5. Global CSS (app/globals.css)
     const globalsCssPath = path.join(templateDir, 'app/globals.css');
-     try {
-        // Potentially add theme-specific CSS variables here if needed
-        archive.file(globalsCssPath, { name: 'app/globals.css' });
-     } catch (err) {
-         console.warn(`Warning: Could not read template file ${globalsCssPath}. Skipping.`, err);
-     }
+    try {
+      archive.file(globalsCssPath, { name: 'app/globals.css' });
+    } catch (err) {
+      console.warn(`Warning: Could not read template file ${globalsCssPath}. Skipping.`, err);
+    }
 
-    // 6. Config Files (tailwind, postcss, tsconfig, next, vercel, package.json, .gitignore)
+    // 6. PostCard Component
+    const postCardTemplatePath = path.join(templateDir, 'components/post-card.tsx');
+    try {
+      const postCardContent = await fs.readFile(postCardTemplatePath, 'utf-8');
+      archive.append(postCardContent, { name: 'components/post-card.tsx' });
+    } catch (err) {
+      console.warn(`Warning: Could not read template file ${postCardTemplatePath}. Skipping.`, err);
+    }
+
+    // 7. Config Files
     const configFiles = [
       'tailwind.config.ts',
       'postcss.config.mjs',
       'tsconfig.json',
       'next.config.mjs',
-      'vercel.json', // Optional, for Vercel deployment hints
+      'vercel.json',
       'package.json',
       '.gitignore',
     ];
@@ -105,22 +175,17 @@ export async function buildZip({
     for (const filename of configFiles) {
       const filePath = path.join(templateDir, filename);
       try {
-            // Check if file exists before attempting to add
-           await fs.access(filePath); // Throws if file doesn't exist
-           archive.file(filePath, { name: filename });
+        await fs.access(filePath);
+        archive.file(filePath, { name: filename });
       } catch (err: any) {
-            if (err.code === 'ENOENT') {
-                 console.warn(`Template file not found: ${filePath}. Skipping.`);
-            } else {
-                console.error(`Error accessing template file ${filePath}:`, err);
-                 // Decide if this should be a fatal error
-                 // reject(new Error(`Failed to access template file: ${filename}`));
-                 // return;
-            }
+        if (err.code === 'ENOENT') {
+          console.warn(`Template file not found: ${filePath}. Skipping.`);
+        } else {
+          console.error(`Error accessing template file ${filePath}:`, err);
+        }
       }
     }
 
-    // --- Finalize Archive ---
     await archive.finalize();
   });
 }
