@@ -1,4 +1,4 @@
-// components/themes/ModernLayout.tsx (V2 - Restored V1 Manual Styling for Single Post)
+// components/themes/ModernLayout.tsx (Modern News Site Design)
 "use client";
 
 import React from "react";
@@ -30,10 +30,20 @@ interface ModernLayoutProps {
   posts?: HomepagePost[];
   mdxContent?: string;
   onClickPost?: (index: number) => void;
+  websiteName?: string; // Added website name prop
 }
 
 // --- Main Layout Component ---
-export function ModernLayout({ posts, mdxContent, onClickPost }: ModernLayoutProps) {
+export function ModernLayout({ posts, mdxContent, onClickPost, websiteName = "Modern Times" }: ModernLayoutProps) {
+
+    // Format current date for news site header
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long', 
+        day: 'numeric',
+        year: 'numeric'
+    });
 
     // --- Scenario 1: Render Single Post MDX View (for Modal) ---
     if (typeof mdxContent === 'string' && mdxContent.trim()) {
@@ -101,7 +111,7 @@ export function ModernLayout({ posts, mdxContent, onClickPost }: ModernLayoutPro
                 .modern-content em { font-style: italic; } .modern-content strong { font-weight: 700; color: #334155; }
                 .modern-content br { display: block; content: ""; margin-top: 0.5rem; }
                 /* Keep V0 Homepage styles here too for simplicity, even though only needed in the other branch */
-                .modern-homepage-layout .font-display { font-family: var(--font-playfair), Georgia, serif; }
+                .modern-homepage-layout .font-display { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
                 .modern-homepage-layout .post-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
                 .modern-homepage-layout .post-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05); }
                 .dark .modern-homepage-layout .post-card:hover { box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); }
@@ -112,6 +122,60 @@ export function ModernLayout({ posts, mdxContent, onClickPost }: ModernLayoutPro
                 .modern-homepage-layout .featured-post-gradient { background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%); }
                 .modern-homepage-layout .category-badge { display: inline-block; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 2rem; background-color: #e9f5ff; color: #0070f3; }
                 .dark .modern-homepage-layout .category-badge { background-color: rgba(0, 112, 243, 0.2); color: #3b82f6; }
+                
+                /* Modern news site header styling */
+                .news-site-header {
+                  border-bottom: 2px solid #000;
+                  padding: 1.5rem 0;
+                  margin-bottom: 2rem;
+                }
+                
+                .dark .news-site-header {
+                  border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+                }
+                
+                .news-site-header .masthead {
+                  font-family: "Georgia", serif;
+                  font-weight: 900;
+                  letter-spacing: -0.03em;
+                  text-transform: none;
+                  line-height: 0.9;
+                }
+                
+                .news-site-header .date-line {
+                  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  font-size: 0.875rem;
+                  color: #666;
+                  letter-spacing: 0.05em;
+                }
+                
+                .dark .news-site-header .date-line {
+                  color: #999;
+                }
+                
+                .breaking-news-bar {
+                  background-color: #f8f8f8;
+                  border-bottom: 1px solid #eaeaea;
+                  padding: 0.5rem 0;
+                  font-size: 0.875rem;
+                  font-weight: 500;
+                }
+                
+                .dark .breaking-news-bar {
+                  background-color: #222;
+                  border-bottom: 1px solid #333;
+                }
+                
+                .breaking-news-label {
+                  background-color: #e63946;
+                  color: white;
+                  padding: 0.25rem 0.5rem;
+                  border-radius: 3px;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 0.05em;
+                  font-size: 0.75rem;
+                }
               `}</style>
               {/* === END V1 STYLES === */}
 
@@ -139,45 +203,73 @@ export function ModernLayout({ posts, mdxContent, onClickPost }: ModernLayoutPro
 
         // Render homepage using V0 structure and Tailwind + specific V0 styles from global style block above
         return (
-            <div className="modern-homepage-layout bg-white dark:bg-neutral-900 p-4 md:p-6 space-y-12">
-                 {/* Featured Post */}
-                 <div className="featured-post post-card mb-12 cursor-pointer group" data-post-index={0} onClick={() => onClickPost?.(0)} role="button" tabIndex={0} onKeyDown={(e)=>{ if (e.key === 'Enter' || e.key === ' ') onClickPost?.(0); }}>
-                     <div className="relative w-full aspect-[16/9] overflow-hidden rounded-xl shadow-md">
-                         <img src={featuredPost.featuredMediaUrl || '/placeholder.svg'} alt={featuredPost.title} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" />
-                         <div className="absolute inset-0 featured-post-gradient"></div>
-                         <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
-                             <h2 className="text-3xl md:text-4xl font-display font-bold mb-3 leading-tight">{featuredPost.title}</h2>
-                             <div className="text-md text-white/90 mb-4 max-w-3xl line-clamp-2" dangerouslySetInnerHTML={{ __html: featuredPost.excerpt || ''}} />
-                             <div className="flex items-center mt-4">
-                                 <div className="w-8 h-8 rounded-full bg-gray-700 mr-3 overflow-hidden author-avatar flex items-center justify-center"><img src="/placeholder-logo.svg" alt={featuredPost.authorName} className="object-contain w-6 h-6 invert dark:invert-0" /></div>
-                                 <div>
-                                     <div className="font-medium text-sm">{featuredPost.authorName}</div>
-                                     <div className="text-xs text-white/80">{new Date(featuredPost.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-                 {/* Regular Posts */}
-                 <h2 className="text-2xl font-display font-bold pb-4 border-b border-slate-200 dark:border-neutral-700">More Articles</h2>
-                 <div className="space-y-10">
-                     {[post2, post3].map((post, index) => (
-                        <article key={post.id} className="post-card bg-card rounded-xl overflow-hidden border border-slate-200 dark:border-neutral-800 md:flex transition-shadow hover:shadow-md cursor-pointer" data-post-index={index + 1} onClick={() => onClickPost?.(index + 1)} role="button" tabIndex={0} onKeyDown={(e)=>{ if (e.key === 'Enter' || e.key === ' ') onClickPost?.(index + 1); }}>
-                            <div className="md:w-2/5 relative h-60 md:h-auto flex-shrink-0 bg-slate-100 dark:bg-neutral-800">{post.featuredMediaUrl && <img src={post.featuredMediaUrl} alt={post.title} className="object-cover w-full h-full" />}</div>
-                            <div className="p-6 md:w-3/5">
-                                <h3 className="text-xl font-display font-bold mb-3 leading-snug text-slate-800 dark:text-slate-100">{post.title}</h3>
-                                <div className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3" dangerouslySetInnerHTML={{ __html: post.excerpt || '' }} />
+            <div className="modern-homepage-layout bg-white dark:bg-neutral-900">
+                {/* Breaking News Bar */}
+                <div className="breaking-news-bar">
+                    <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center space-x-3">
+                    </div>
+                </div>
+                
+                {/* Stylish News Site Header */}
+                <div className="news-site-header mt-6">
+                    <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col items-center">
+                        <h1 className="masthead text-4xl md:text-6xl lg:text-7xl text-center mb-1">
+                            {websiteName}
+                        </h1>
+                        <div className="date-line text-center mb-2">
+                            {formattedDate}
+                        </div>
+                        <div className="border-t border-b border-gray-200 dark:border-gray-700 w-full max-w-lg mx-auto py-1 my-2"></div>
+                    </div>
+                </div>
+                
+                <div className="p-4 md:p-6 max-w-7xl mx-auto">
+                    {/* Featured Post */}
+                    <div className="featured-post post-card mb-12 cursor-pointer group" data-post-index={0} onClick={() => onClickPost?.(0)} role="button" tabIndex={0} onKeyDown={(e)=>{ if (e.key === 'Enter' || e.key === ' ') onClickPost?.(0); }}>
+                        <div className="relative w-full aspect-[16/9] overflow-hidden rounded-lg shadow-md">
+                            <img src={featuredPost.featuredMediaUrl || '/placeholder.svg'} alt={featuredPost.title} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" />
+                            <div className="absolute inset-0 featured-post-gradient"></div>
+                            <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
+                                <h2 className="text-3xl md:text-4xl font-display font-bold mb-3 leading-tight">{featuredPost.title}</h2>
+                                <div className="text-md text-white/90 mb-4 max-w-3xl line-clamp-2" dangerouslySetInnerHTML={{ __html: featuredPost.excerpt || ''}} />
                                 <div className="flex items-center mt-4">
-                                    <div className="w-8 h-8 rounded-full bg-gray-300 mr-3 overflow-hidden author-avatar flex items-center justify-center"><img src="/placeholder-logo.svg" alt={post.authorName} className="object-contain w-6 h-6 invert dark:invert-0" /></div>
+                                    <div className="w-8 h-8 rounded-full bg-gray-700 mr-3 overflow-hidden author-avatar flex items-center justify-center"><img src="/placeholder-logo.svg" alt={featuredPost.authorName} className="object-contain w-6 h-6 invert dark:invert-0" /></div>
                                     <div>
-                                        <div className="font-medium text-sm text-slate-700 dark:text-slate-300">{post.authorName}</div>
-                                        <div className="text-xs text-slate-400 dark:text-slate-500">{new Date(post.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</div>
+                                        <div className="font-medium text-sm">{featuredPost.authorName}</div>
+                                        <div className="text-xs text-white/80">{new Date(featuredPost.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
                                     </div>
                                 </div>
                             </div>
-                        </article>
-                     ))}
-                 </div>
+                        </div>
+                    </div>
+                    
+                    {/* Section Header with Modern Styling */}
+                    <div className="flex items-center mb-8">
+                        <h2 className="text-xl md:text-2xl font-display font-bold">Latest Stories</h2>
+                        <div className="flex-grow ml-4 border-t border-gray-200 dark:border-gray-700"></div>
+                    </div>
+                    
+                    {/* Regular Posts */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {[post2, post3].map((post, index) => (
+                            <article key={post.id} className="post-card bg-card rounded-lg overflow-hidden border border-slate-200 dark:border-neutral-800 transition-shadow hover:shadow-md cursor-pointer" data-post-index={index + 1} onClick={() => onClickPost?.(index + 1)} role="button" tabIndex={0} onKeyDown={(e)=>{ if (e.key === 'Enter' || e.key === ' ') onClickPost?.(index + 1); }}>
+                                <div className="relative h-48 overflow-hidden bg-slate-100 dark:bg-neutral-800">
+                                    {post.featuredMediaUrl && <img src={post.featuredMediaUrl} alt={post.title} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" />}
+                                </div>
+                                <div className="p-5">
+                                    <h3 className="text-lg font-display font-bold mb-2 leading-snug text-slate-800 dark:text-slate-100">{post.title}</h3>
+                                    <div className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2" dangerouslySetInnerHTML={{ __html: post.excerpt || '' }} />
+                                    <div className="flex items-center mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                        <div className="w-6 h-6 rounded-full bg-gray-300 mr-2 overflow-hidden author-avatar flex items-center justify-center"><img src="/placeholder-logo.svg" alt={post.authorName} className="object-contain w-4 h-4 invert dark:invert-0" /></div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                            <span className="font-medium">{post.authorName}</span> • <span>{new Date(post.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                </div>
             </div>
         );
     }
