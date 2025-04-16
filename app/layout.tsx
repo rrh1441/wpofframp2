@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'WP Offramp',
   description: 'Leave WordPress Behind',
   generator: 'v0.dev + gemini + claude + chatgpt',
+  icons: {
+    icon: '/favicon.ico', // Make sure this file exists in the /public folder
+  },
 }
 
 export default function RootLayout({
