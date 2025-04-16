@@ -1,4 +1,4 @@
-// --- app/page.tsx ---
+// --- app/p age.tsx ---
 "use client";
 
 import Link from "next/link";
