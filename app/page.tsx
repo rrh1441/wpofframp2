@@ -25,11 +25,12 @@ import {
 } from "lucide-react";
 import HeroPreview from "@/components/hero-preview";
 import { THEMES } from "@/lib/constants";
-import EnhancedStepGuide from "@/components/enhanced-step-guide"; // <-- Import the new component
+import EnhancedStepGuide from "@/components/enhanced-step-guide"; // Import the guide component
 
 const themeKeys = ["modern", "matrix", "ghibli"];
 
 const whoIsItForData = [
+  // ... (whoIsItForData remains the same)
   {
     icon: BarChartBig,
     title: "Content Creators & Bloggers",
@@ -68,6 +69,7 @@ const whoIsItForData = [
   },
 ];
 
+
 export default function Home() {
   const currentYear = new Date().getFullYear();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -99,7 +101,7 @@ export default function Home() {
           </nav>
         </div>
         {mobileMenuOpen && (
-          <div className="sm:hidden px-4 pt-2 pb-4 space-y-2 border-b"> {/* Added border-b */}
+          <div className="sm:hidden px-4 pt-2 pb-4 space-y-2 border-b">
             <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
               <Link href="#details" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
             </Button>
@@ -133,12 +135,13 @@ export default function Home() {
         </section>
 
         {/* Section 2: NEW Step-by-Step Guide */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-background border-t"> {/* Adjusted background and added border */}
+        {/* ADJUSTED PADDING HERE: Reduced top padding, kept bottom padding */}
+        <section className="w-full pt-12 pb-12 md:pb-24 lg:pb-32 bg-background border-t">
           <div className="container px-4 md:px-6">
-             <div className="flex flex-col items-center space-y-8"> {/* Centering container */}
-               {/* Optional Heading for the Guide Section */}
+             <div className="flex flex-col items-center space-y-8">
+               {/* Optional Heading for the Guide Section - Uncomment if desired */}
                {/*
-               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center">
+               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-4 md:mb-8">
                  From WordPress to Vercel: Step-by-Step
                </h2>
                */}
@@ -149,7 +152,7 @@ export default function Home() {
         {/* End New Section */}
 
         {/* Section 3: How It Works / Details */}
-        <section id="details" className="w-full py-12 md:py-24 lg:py-32 bg-muted border-t"> {/* Added border-t */}
+        <section id="details" className="w-full py-12 md:py-24 lg:py-32 bg-muted border-t">
           <div className="container px-4 md:px-6 max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 xl:gap-20">
               <div className="flex flex-col space-y-8">
@@ -159,7 +162,8 @@ export default function Home() {
                 </div>
                 <div className="grid gap-6">
                   {[...Array(3)].map((_, idx) => {
-                    const steps = [
+                    // ... (How It Works Card mapping remains the same)
+                     const steps = [
                       {
                         title: "Enter Your URL",
                         description: "Paste your WordPress site URL or choose example",
@@ -196,7 +200,8 @@ export default function Home() {
                 </div>
                 <div className="grid grid-cols-1 gap-6">
                   {themeKeys.map((key, index) => {
-                    const theme = THEMES[key as keyof typeof THEMES];
+                    // ... (Themes Card mapping remains the same)
+                     const theme = THEMES[key as keyof typeof THEMES];
                     if (!theme) return null;
                     return (
                       <Card key={key} className="h-full flex flex-col">
@@ -227,7 +232,8 @@ export default function Home() {
 
         {/* Section 4: Who Is It For */}
         <section id="who-is-it-for" className="w-full py-12 md:py-24 lg:py-32 border-t">
-          <div className="container px-4 md:px-6">
+          {/* ... (Who It's For section remains the same) ... */}
+           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-8 text-center">
               <div className="space-y-3">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">WP Offramp is Best For</h2>
@@ -254,7 +260,8 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+        {/* ... (Footer remains the same) ... */}
+         <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
             © {currentYear} WP Offramp. All rights reserved.
           </p>
