@@ -57,7 +57,7 @@ export async function buildZip({
     // 1. Homepage (app/page.tsx)
     const homepageContent = `
 import Link from 'next/link';
-import { PostCard } from '@/components/post-card';
+import { PostCard } from '../components/post-card';
 
 const homepagePosts = ${JSON.stringify(homepagePosts)};
 
