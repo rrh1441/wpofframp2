@@ -74,7 +74,7 @@ export default function EnhancedStepGuide() {
    <div className="p-4 md:p-8">
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
      <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">From WordPress to Vercel: Step-by-Step</h2>
-     {/* == REMOVED Step X of Y Indicator Div == */}
+     {/* Step X of Y Indicator was removed here */}
     </div>
 
     {/* Step indicator buttons (will wrap) */}
@@ -117,6 +117,7 @@ export default function EnhancedStepGuide() {
     <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-muted/10 via-background to-muted/30 p-1 shadow-inner border border-border/20" style={{ minHeight: "450px" }}>
      <div className="relative h-full w-full overflow-hidden rounded-md bg-background p-4 md:p-6">
       <AnimatePresence custom={direction} mode="wait">
+       {/* == Removed "absolute inset-0" from this motion.div == */}
        <motion.div
         key={currentStep}
         custom={direction}
@@ -125,7 +126,7 @@ export default function EnhancedStepGuide() {
         animate="center"
         exit="exit"
         transition={{ duration: 0.4, ease: "easeInOut" }}
-        className="flex flex-col md:flex-row gap-6 md:gap-8 absolute inset-0 p-4 md:p-6"
+        className="flex flex-col md:flex-row gap-6 md:gap-8 p-4 md:p-6" // Removed absolute positioning
        >
         {/* Image Column */}
         <div className="w-full md:w-3/5 relative rounded-lg overflow-hidden bg-muted/40 border border-border/50 shadow-sm">
