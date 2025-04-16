@@ -1,4 +1,3 @@
-// lib/buildZip.ts
 import fs from 'fs/promises';
 import path from 'path';
 import archiver from 'archiver';
@@ -30,17 +29,20 @@ export async function buildZip({
 }: BuildZipArgs): Promise<Buffer> {
   return new Promise(async (resolve, reject) => {
     const outputBuffers: Buffer[] = [];
-    const converter = new Writable();
-    converter._write = (chunk, _encoding, done) => {
-      outputBuffers.push(chunk);
-      done();
-    };
+
+    const converter = new Writable({
+      write(chunk, _encoding, done) {
+        outputBuffers.push(chunk);
+        done();
+      },
+    });
+
     converter.on('finish', () => {
       resolve(Buffer.concat(outputBuffers));
     });
 
     const archive = archiver('zip', {
-      zlib: { level: 9 }, // Maximum compression
+      zlib: { level: 9 },
     });
 
     archive.on('error', (err) => {
@@ -52,10 +54,11 @@ export async function buildZip({
 
     const templateDir = path.join(process.cwd(), 'templates');
 
-    // --- Add Project Files ---
+    // --- Conditional Homepage ---
+    let homepageContent = '';
 
-    // 1. Homepage (app/page.tsx)
-    const homepageContent = `
+    if (theme === 'matrix') {
+      homepageContent = `
 import Link from 'next/link';
 import { PostCard } from '../components/post-card';
 
@@ -84,9 +87,21 @@ export default function HomePage() {
   );
 }
 `;
+    } else {
+      homepageContent = `
+export default function HomePage() {
+  return (
+    <main className="min-h-screen flex items-center justify-center">
+      <p>Theme "${theme}" doesn't use a homepage layout. Open a post to view the site preview.</p>
+    </main>
+  );
+}
+`;
+    }
+
     archive.append(homepageContent, { name: 'app/page.tsx' });
 
-    // 2. Dynamic Post Page (app/posts/[slug]/page.tsx)
+    // --- Dynamic Post Page ---
     const postPageContent = `
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -125,44 +140,33 @@ export async function generateMetadata() {
   };
 }
 `;
-    archive.append(postPageContent, { name: `app/posts/${mostRecentPostSlug}/page.tsx` });
+    archive.append(postPageContent, {
+      name: `app/posts/${mostRecentPostSlug}/page.tsx`,
+    });
 
-    // 3. MDX Layout Component
+    // --- Components ---
     const layoutTemplatePath = path.join(templateDir, 'components/Layout.tsx');
     try {
       const layoutContent = await fs.readFile(layoutTemplatePath, 'utf-8');
       archive.append(layoutContent, { name: 'components/Layout.tsx' });
     } catch (err) {
-      console.warn(`Warning: Could not read template file ${layoutTemplatePath}. Skipping.`, err);
+      console.warn(`Warning: Missing Layout.tsx: ${layoutTemplatePath}`, err);
     }
 
-    // 4. Root Layout (app/layout.tsx)
-    const rootLayoutTemplatePath = path.join(templateDir, 'app/layout.tsx');
-    try {
-      archive.file(rootLayoutTemplatePath, { name: 'app/layout.tsx' });
-    } catch (err) {
-      console.warn(`Warning: Could not read template file ${rootLayoutTemplatePath}. Skipping.`, err);
+    if (theme === 'matrix') {
+      const postCardPath = path.join(templateDir, 'components/post-card.tsx');
+      try {
+        await fs.access(postCardPath);
+        const postCardContent = await fs.readFile(postCardPath, 'utf-8');
+        archive.append(postCardContent, { name: 'components/post-card.tsx' });
+      } catch (err) {
+        console.error(`❌ ERROR: Missing required file for Matrix theme: ${postCardPath}`);
+        return reject(err);
+      }
     }
 
-    // 5. Global CSS (app/globals.css)
-    const globalsCssPath = path.join(templateDir, 'app/globals.css');
-    try {
-      archive.file(globalsCssPath, { name: 'app/globals.css' });
-    } catch (err) {
-      console.warn(`Warning: Could not read template file ${globalsCssPath}. Skipping.`, err);
-    }
-
-    // 6. PostCard Component
-    const postCardTemplatePath = path.join(templateDir, 'components/post-card.tsx');
-    try {
-      const postCardContent = await fs.readFile(postCardTemplatePath, 'utf-8');
-      archive.append(postCardContent, { name: 'components/post-card.tsx' });
-    } catch (err) {
-      console.warn(`Warning: Could not read template file ${postCardTemplatePath}. Skipping.`, err);
-    }
-
-    // 7. Config Files
-    const configFiles = [
+    // --- Static App Files ---
+    const staticFiles = [
       'tailwind.config.ts',
       'postcss.config.mjs',
       'tsconfig.json',
@@ -170,9 +174,11 @@ export async function generateMetadata() {
       'vercel.json',
       'package.json',
       '.gitignore',
+      'app/layout.tsx',
+      'app/globals.css',
     ];
 
-    for (const filename of configFiles) {
+    for (const filename of staticFiles) {
       const filePath = path.join(templateDir, filename);
       try {
         await fs.access(filePath);
@@ -181,7 +187,7 @@ export async function generateMetadata() {
         if (err.code === 'ENOENT') {
           console.warn(`Template file not found: ${filePath}. Skipping.`);
         } else {
-          console.error(`Error accessing template file ${filePath}:`, err);
+          console.error(`Error accessing ${filePath}:`, err);
         }
       }
     }
