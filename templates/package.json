@@ -12,16 +12,18 @@
     "@mdx-js/loader": "^3.0.1",
     "@mdx-js/react": "^3.0.1",
     "@next/mdx": "^14.2.5",
+    "date-fns": "^3.6.0",
     "next": "^14.2.5",
-    "next-mdx-remote": "^5.0.0", 
+    "next-mdx-remote": "^5.0.0",
     "react": "^18",
-    "react-dom": "^18",
-    "date-fns": "^3.6.0"
+    "react-dom": "^18"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.13",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.19",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
