@@ -2,7 +2,7 @@
   "buildCommand": "next build",
   "outputDirectory": ".next",
   "functions": {
-    "api/**/*.ts": {
+    "app/api/**/route.ts": {
       "includeFiles": "templates/**"
     }
   }
