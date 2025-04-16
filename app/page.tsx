@@ -1,4 +1,3 @@
-// --- app/p age.tsx ---
 "use client";
 
 import Link from "next/link";
@@ -86,7 +85,7 @@ export default function Home() {
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
-          <nav className="hidden sm:flex items-center space-x-2">
+          <nav className="hidden sm:flex items-center gap-6">
             <Button variant="ghost" size="sm" asChild>
               <Link href="#details">How It Works</Link>
             </Button>
@@ -132,7 +131,7 @@ export default function Home() {
         </section>
 
         <section id="details" className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-          <div className="container px-4 md:px-6">
+          <div className="container px-4 md:px-6 max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 xl:gap-20">
               <div className="flex flex-col space-y-8">
                 <div className="space-y-4">
@@ -140,33 +139,35 @@ export default function Home() {
                   <p className="text-muted-foreground md:text-lg">Three simple steps to transform your WordPress site</p>
                 </div>
                 <div className="grid gap-6">
-                  <Card className="h-full flex flex-col">
-                    <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">1</div>
-                      <CardTitle className="text-xl">Enter Your URL</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <p className="text-sm text-muted-foreground">Paste your WordPress site URL or choose example</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="h-full flex flex-col">
-                    <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">2</div>
-                      <CardTitle className="text-xl">Preview Themes</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <p className="text-sm text-muted-foreground">Instantly switch between beautiful themes</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="h-full flex flex-col">
-                    <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">3</div>
-                      <CardTitle className="text-xl">Migrate & Deploy</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <p className="text-sm text-muted-foreground">Download your new Next.js project as a ZIP to deploy</p>
-                    </CardContent>
-                  </Card>
+                  {[...Array(3)].map((_, idx) => {
+                    const steps = [
+                      {
+                        title: "Enter Your URL",
+                        description: "Paste your WordPress site URL or choose example",
+                      },
+                      {
+                        title: "Preview Themes",
+                        description: "Instantly switch between beautiful themes",
+                      },
+                      {
+                        title: "Migrate & Deploy",
+                        description: "Download your new Next.js project as a ZIP to deploy",
+                      },
+                    ];
+                    return (
+                      <Card key={idx} className="h-full flex flex-col">
+                        <CardHeader className="flex flex-row items-center gap-4 pb-2">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+                            {idx + 1}
+                          </div>
+                          <CardTitle className="text-xl">{steps[idx].title}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                          <p className="text-sm text-muted-foreground">{steps[idx].description}</p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
               <div className="flex flex-col space-y-8">
@@ -181,7 +182,9 @@ export default function Home() {
                     return (
                       <Card key={key} className="h-full flex flex-col">
                         <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">{index + 1}</div>
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+                            {index + 1}
+                          </div>
                           <CardTitle className="text-xl">{theme.name}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex-grow">
