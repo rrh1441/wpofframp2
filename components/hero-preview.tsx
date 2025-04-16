@@ -112,7 +112,7 @@ export default function HeroPreview() {
                 )}
                 {/* --- END Migration Card --- */}
 
-                {/* --- MOVED: Dynamically Imported Waitlist Form is now here --- */}
+                {/* --- MOVED: Dynam ically Imported Waitlist Form is now here --- */}
                 <DynamicHeroWaitlistWrapper />
 
                 {/* Modal Dialog */}
