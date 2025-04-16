@@ -40,7 +40,7 @@ const whoIsItForData = [
     icon: BriefcaseBusiness,
     title: "Entrepreneurs",
     description:
-      "Need a professional, fast, and secure web presence for lead generation or branding without WordPress maintenance.",
+      "Get a professional, fast, and secure web presence for lead generation or branding without WordPress maintenance.",
   },
   {
     icon: Palette,
