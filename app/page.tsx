@@ -3,10 +3,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Rocket, Sparkles, ShieldCheck, BarChartBig, Code2, ArrowRight, BriefcaseBusiness, Palette, Mail } from "lucide-react"; // Added Mail
+import { Rocket, Sparkles, ShieldCheck, BarChartBig, Code2, ArrowRight, BriefcaseBusiness, Palette, Mail } from "lucide-react";
 import HeroPreview from "@/components/hero-preview";
 import { THEMES } from "@/lib/constants";
-import { WaitlistForm } from "@/components/waitlist-form"; // <-- Import the reusable component
+// We no longer need to import WaitlistForm directly here
+// import { WaitlistForm } from "@/components/waitlist-form";
+import { WaitlistSection } from "@/components/waitlist-section"; // <-- Import the new wrapper component
 
 // Theme array without 'drudge'
 const themeKeys = ['modern', 'matrix', 'ghibli'];
@@ -67,10 +69,10 @@ export default function Home() {
               </Button>
               <Button variant="ghost" size="sm" asChild>
                  <Link href="#who-is-it-for">Who It's For</Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                 <Link href="#waitlist">Join Waitlist</Link> {/* Added link to waitlist */}
-                </Button>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                 <Link href="#waitlist">Join Waitlist</Link> {/* Link to the section ID */}
+              </Button>
               <Button size="sm" asChild>
                 <Link href="#top">Try Now</Link>
               </Button>
@@ -98,7 +100,7 @@ export default function Home() {
                   <h2 className="text-2xl font-semibold mb-4 text-center md:text-left">
                     Reimagine Your Site
                   </h2>
-                  <HeroPreview />
+                  <HeroPreview /> {/* This component renders the first WaitlistForm instance conditionally */}
               </div>
             </div>
           </div>
@@ -216,26 +218,18 @@ export default function Home() {
           </div>
         </section>
 
-        {/* --- ADDED Waitlist Form Instance #2 Section --- */}
-        <section id="waitlist" className="w-full py-12 md:py-24 lg:py-32 border-t bg-muted">
-          <div className="container px-4 md:px-6 flex flex-col items-center">
-             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl mb-8 text-center">
-               Stay Updated
-             </h2>
-             <WaitlistForm />
-          </div>
-        </section>
-        {/* --- End Waitlist Form Instance #2 Section --- */}
+        {/* --- RENDER THE WRAPPER COMPONENT FOR THE SECOND WAITLIST FORM --- */}
+        <WaitlistSection />
+        {/* --- End Waitlist Form Section --- */}
 
       </main>
 
-      {/* Footer - Updated */}
+      {/* Footer */}
        <footer className="w-full border-t py-6 md:py-0">
          <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
            <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
              © {currentYear} WP Offramp. All rights reserved.
            </p>
-           {/* Updated: Removed Terms/Privacy, Contact is mailto */}
            <div className="flex items-center gap-2 sm:gap-4">
              <Button variant="ghost" size="sm" asChild>
                <a href="mailto:support@simpleappsgroup.com">Contact</a>
