@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { THEMES, ThemeKey } from "@/lib/constants";
-import type { HomepagePost } from "@/app/api/homepage-preview/route";
+// Updated type definition to include siteName
+import type { HomepagePost, HomepagePreviewData } from "@/app/api/homepage-preview/route";
 import { cn } from "@/lib/utils";
 import { ModernLayout } from './themes/ModernLayout';
 import { MatrixLayout } from './themes/MatrixLayout';
@@ -40,6 +41,36 @@ const exampleSites = [ { name: "Harvard Gazette", url: "https://news.harvard.edu
 type ApiCheckStatus = 'idle' | 'loading' | 'success' | 'error';
 type ModalContent = { title: string; mdx: string; id: number; link: string; } | null;
 
+// Helper function for cleaning hostname fallback
+const cleanHostname = (hostname: string): string => {
+    if (!hostname) return "Website Preview";
+    try {
+        let name = hostname.toLowerCase();
+        // Remove www.
+        if (name.startsWith('www.')) {
+            name = name.substring(4);
+        }
+        // Remove common TLDs - add more as needed
+        const commonTlds = ['.com', '.org', '.net', '.co', '.io', '.dev', '.app', '.edu', '.gov', '.info', '.biz'];
+        const tldIndex = commonTlds.findIndex(tld => name.endsWith(tld));
+        if (tldIndex !== -1) {
+            name = name.substring(0, name.length - commonTlds[tldIndex].length);
+        }
+        // Capitalize first letter
+        if (name.length > 0) {
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+        }
+        // Replace dots/hyphens with spaces and capitalize parts (optional refinement)
+        name = name.replace(/[\.-]/g, ' ');
+         name = name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+        return name || hostname; // Return original hostname if cleaning results in empty string
+    } catch (e) {
+        console.error("Error cleaning hostname:", e);
+        return hostname; // Fallback to original hostname on error
+    }
+};
+
 
 export default function HeroPreview() {
     // State declarations (Assume these are correct)
@@ -60,14 +91,51 @@ export default function HeroPreview() {
 
     // Hooks and Functions (Assume these are correct)
     useEffect(() => { const handler = setTimeout(() => { const normalizedInputUrl = url ? normalizeUrl(url) : ""; if ((normalizedInputUrl && resultsUrl && normalizedInputUrl !== resultsUrl) || (!url && resultsUrl)) { setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setApiCheckStatus('idle'); setApiCheckMessage(null); setDisplayedSiteName(null); } }, 300); return () => clearTimeout(handler); }, [url, resultsUrl]);
-    const fetchHomepagePreview = useCallback(async (targetUrl: string, siteName?: string) => { setIsLoading(true); setFetchError(null); setMigrationError(null); setResultsUrl(targetUrl); setDisplayedSiteName(siteName || null); try { const response = await fetch("/api/homepage-preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wpUrl: targetUrl }), }); if (!response.ok) { let errorMsg = `Failed (Status: ${response.status})`; try { const d = await response.json(); errorMsg = d.message || errorMsg; } catch (e) { try { const t = await response.text(); errorMsg += `: ${t.substring(0,100)}`;} catch(te){/*i*/} } if (response.status === 504) errorMsg = `Server timeout (504).`; throw new Error(errorMsg); } const data: { homepagePosts: HomepagePost[] } = await response.json(); if (!data.homepagePosts || data.homepagePosts.length === 0) { throw new Error("No posts found."); } setHomepagePosts(data.homepagePosts); setFetchError(null); if (!siteName) { try { setDisplayedSiteName(new URL(targetUrl).hostname); } catch (e) { setDisplayedSiteName(targetUrl); } } } catch (error: any) { console.error("[Homepage Preview] Fetch failed:", error); setFetchError(error instanceof Error ? error.message : "Unknown preview fetch error."); setHomepagePosts([]); setResultsUrl(null); setDisplayedSiteName(null); } finally { setIsLoading(false); } }, []);
+    const fetchHomepagePreview = useCallback(async (targetUrl: string, siteName?: string) => { setIsLoading(true); setFetchError(null); setMigrationError(null); setResultsUrl(targetUrl); setDisplayedSiteName(siteName || null); // Set initial name if provided (example sites)
+        try { const response = await fetch("/api/homepage-preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wpUrl: targetUrl }), }); if (!response.ok) { let errorMsg = `Failed (Status: ${response.status})`; try { const d = await response.json(); errorMsg = d.message || errorMsg; } catch (e) { try { const t = await response.text(); errorMsg += `: ${t.substring(0,100)}`;} catch(te){/*i*/} } if (response.status === 504) errorMsg = `Server timeout (504).`; throw new Error(errorMsg); }
+            // --- MODIFIED PART ---
+            const data: HomepagePreviewData = await response.json(); // Use updated type
+            if (!data.homepagePosts || data.homepagePosts.length === 0) { throw new Error("No posts found."); }
+            setHomepagePosts(data.homepagePosts);
+            setFetchError(null);
+
+            // Prioritize API siteName, then clean fallback, then raw hostname
+            if (data.siteName) {
+                setDisplayedSiteName(data.siteName);
+            } else if (!siteName) { // Only do fallback if it wasn't an example site call
+                try {
+                    const hostname = new URL(targetUrl).hostname;
+                    const cleanedName = cleanHostname(hostname);
+                    setDisplayedSiteName(cleanedName);
+                } catch (e) {
+                    console.warn("Could not parse URL for fallback site name:", targetUrl, e);
+                    setDisplayedSiteName(targetUrl); // Very last resort
+                }
+            }
+            // --- END MODIFIED PART ---
+        } catch (error: any) { console.error("[Homepage Preview] Fetch failed:", error); setFetchError(error instanceof Error ? error.message : "Unknown preview fetch error."); setHomepagePosts([]); setResultsUrl(null); setDisplayedSiteName(null); } finally { setIsLoading(false); } }, []);
     const checkApi = useCallback(async (targetUrl: string): Promise<boolean> => { setIsCheckingApi(true); setApiCheckStatus('loading'); setApiCheckMessage(null); try { const response = await fetch("/api/check-wp-api", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wpUrl: targetUrl }) }); const result = await response.json(); setApiCheckStatus(result.success ? 'success' : 'error'); setApiCheckMessage(result.message); if (!response.ok || !result.success) { console.error(`[API Check] Failed: ${result.message || `Status: ${response.status}`}`); return false; } return true; } catch (error) { console.error("[API Check] Fetch failed:", error); setApiCheckStatus('error'); setApiCheckMessage("Error checking API status."); return false; } finally { setIsCheckingApi(false); } }, []);
     const handleGenerateClick = useCallback(async () => { if (!url) { toast.error("Please enter a site URL."); return; } if (isCheckingApi || isLoading || isMigrating) return; const targetUrl = normalizeUrl(url); if (!targetUrl) { toast.error("Invalid URL format."); return; } if (resultsUrl === targetUrl && homepagePosts.length > 0) { toast("Preview already generated.", {duration: 2000}); return; } setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null); const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl); } }, [url, isCheckingApi, isLoading, isMigrating, resultsUrl, homepagePosts.length, checkApi, fetchHomepagePreview]);
     const handleExampleClick = useCallback(async (site: { name: string, url: string }) => { if (isLoading || isMigrating || isCheckingApi) return; const targetUrl = normalizeUrl(site.url); setUrl(targetUrl); setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null); const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl, site.name); } }, [isLoading, isMigrating, isCheckingApi, checkApi, fetchHomepagePreview]);
     const handlePostCardClick = useCallback((postIndex: number) => { if (postIndex === 0 && homepagePosts[0]?.fullContent?.mdx) { const post = homepagePosts[0]; setModalPostContent({ title: post.title, mdx: post.fullContent.mdx, id: post.id, link: post.link }); setIsModalOpen(true); } else if (postIndex > 0) { toast.dismiss(); toast("Full preview only available for the most recent post.", { duration: 4000, position: 'bottom-center' }); } else { toast.error("Could not load post content for preview.", { duration: 3000 }); } }, [homepagePosts]);
     const handleMigrate = async () => { const mostRecentPost = homepagePosts[0]; if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent) { setMigrationError("Cannot migrate..."); return; } setIsMigrating(true); setMigrationError(null); setFetchError(null); try { const payload = { wpUrl: resultsUrl, theme: activeTheme, homepagePostsData: homepagePosts.map((p, i) => ({ ...p, fullContent: i === 0 ? p.fullContent : undefined })) }; const response = await fetch("/api/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) { let msg = `Migration failed! (Status: ${response.status})`; try{const d=await response.json(); msg=d.error||msg;}catch(e){} if(response.status===429) msg="Rate limit reached."; throw new Error(msg); } const contentType = response.headers.get('Content-Type'); if (!contentType || !contentType.includes('application/zip')) throw new Error('Server did not return ZIP.'); const blob = await response.blob(); const downloadUrl = window.URL.createObjectURL(blob); const link = document.createElement('a'); link.href = downloadUrl; const disposition = response.headers.get('Content-Disposition'); let filename = `${activeTheme}_homepage_site.zip`; if (disposition?.includes('filename=')) { const matches = /filename\*?=['"]?([^'";]+)['"]?/.exec(disposition); if (matches?.[1]) filename = decodeURIComponent(matches[1]); } link.setAttribute('download', filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(downloadUrl); } catch (error: any) { console.error("[Migrate V2] Failed:", error); setMigrationError(`${error.message || "Unknown migration error"}`); } finally { setIsMigrating(false); } };
     const renderSkeleton = () => ( <div className="p-6 space-y-4 animate-pulse"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-4 w-1/2" /><div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start"><div className="lg:col-span-2 space-y-4"><Skeleton className="h-80 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-5/6" /></div><div className="space-y-6 lg:space-y-8"><div className="space-y-3"><Skeleton className="h-48 w-full" /><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-5/6" /></div><div className="space-y-3"><Skeleton className="h-48 w-full" /><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-5/6" /></div></div></div></div> );
-    const renderPreviewArea = () => { const ActiveLayout = themeLayoutMap[activeTheme]; let fallbackName = "Website Preview"; if (!displayedSiteName && resultsUrl) { try { fallbackName = new URL(resultsUrl).hostname; } catch (e) { fallbackName = resultsUrl; } } else if (!displayedSiteName && url) { try { fallbackName = new URL(normalizeUrl(url)).hostname; } catch (e) {/* ignore */} } const nameToPass = displayedSiteName || fallbackName; if (isCheckingApi || isLoading) { return renderSkeleton(); } if (apiCheckStatus === 'error' && !isCheckingApi) { return renderSkeleton(); } if (fetchError && !isLoading) { return (<div className="p-4 md:p-6"><Alert variant="destructive"><AlertCircle className="h-4 w-4" /> <AlertTitle>Preview Error</AlertTitle><AlertDescription>{fetchError}</AlertDescription></Alert></div>); } if (!resultsUrl && url && !fetchError) { return (<div className="text-center py-10 text-muted-foreground">Click "Generate Previews".</div>); } if (!resultsUrl && !url) { return (<div className="text-center py-10 text-muted-foreground">Enter site URL & click "Generate Previews".</div>); } if (resultsUrl && homepagePosts.length === 0 && !isLoading && !fetchError) { return renderSkeleton(); } if (ActiveLayout && homepagePosts.length > 0) { return <ActiveLayout posts={homepagePosts} onClickPost={handlePostCardClick} websiteName={nameToPass} />; } if (!ActiveLayout) return (<div className="p-4 text-red-600">Error: Theme layout component missing.</div>); return renderSkeleton(); };
+    const renderPreviewArea = () => { const ActiveLayout = themeLayoutMap[activeTheme];
+        // --- Simplified name determination: Use state directly ---
+        const nameToPass = displayedSiteName || "Website Preview";
+        // --- End Simplified name determination ---
+
+        if (isCheckingApi || isLoading) { return renderSkeleton(); }
+        if (apiCheckStatus === 'error' && !isCheckingApi) { return renderSkeleton(); } // Keep skeleton if API check failed
+        if (fetchError && !isLoading) { return (<div className="p-4 md:p-6"><Alert variant="destructive"><AlertCircle className="h-4 w-4" /> <AlertTitle>Preview Error</AlertTitle><AlertDescription>{fetchError}</AlertDescription></Alert></div>); }
+        // Show skeleton while loading OR if we have a URL but no posts/error yet (initial state after generate click)
+        if ((resultsUrl && homepagePosts.length === 0 && !isLoading && !fetchError) || isLoading) { return renderSkeleton(); }
+        if (!resultsUrl && url && !fetchError) { return (<div className="text-center py-10 text-muted-foreground">Click "Generate Previews".</div>); }
+        if (!resultsUrl && !url) { return (<div className="text-center py-10 text-muted-foreground">Enter site URL & click "Generate Previews".</div>); }
+        if (ActiveLayout && homepagePosts.length > 0) { return <ActiveLayout posts={homepagePosts} onClickPost={handlePostCardClick} websiteName={nameToPass} />; }
+        if (!ActiveLayout) return (<div className="p-4 text-red-600">Error: Theme layout component missing.</div>);
+        return renderSkeleton(); // Default fallback
+    };
     const renderApiStatusAlert = () => { if (isLoading || (homepagePosts.length > 0 && !fetchError)) return null; if (apiCheckStatus === 'idle') return null; let variant: "default" | "destructive" | "success" = "default"; let Icon = Info; let title = "API Status"; if (apiCheckStatus === 'loading') { Icon = Loader2; title = "Checking API..."; variant = "default"; } else if (apiCheckStatus === 'success') { Icon = CheckCircle2; title = "API Check OK"; variant = "success"; } else if (apiCheckStatus === 'error') { Icon = AlertTriangle; title = "API Check Failed"; variant = "destructive"; } if (apiCheckStatus === 'success' && fetchError) return null; return ( <Alert variant={variant} className="mt-4"> <Icon className={cn("h-4 w-4 mt-1 shrink-0", apiCheckStatus==='loading' && 'animate-spin')} /> <div className="ml-2"> <AlertTitle>{title}</AlertTitle> {apiCheckMessage && <AlertDescription className="whitespace-pre-wrap text-sm">{apiCheckMessage}</AlertDescription>} </div> </Alert> ); };
 
 
@@ -91,12 +159,21 @@ export default function HeroPreview() {
                 {/* Preview Window */}
                 <div className="w-full">
                     <div className="border rounded-lg overflow-hidden shadow-lg bg-gray-100 w-full">
-                        <div className="bg-muted border-b px-4 py-2 flex items-center text-xs"><div className="flex space-x-1.5"> <div className="w-2.5 h-2.5 rounded-full bg-red-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-green-500/90"></div> </div><div className="flex-1 text-center font-medium text-muted-foreground truncate px-4"> {displayedSiteName || (resultsUrl ? new URL(resultsUrl).hostname : "WP Offramp Preview") } </div><div className="w-10"></div></div>
+                        {/* --- MODIFIED PREVIEW HEADER --- */}
+                        <div className="bg-muted border-b px-4 py-2 flex items-center text-xs">
+                            <div className="flex space-x-1.5"> <div className="w-2.5 h-2.5 rounded-full bg-red-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-green-500/90"></div> </div>
+                            <div className="flex-1 text-center font-medium text-muted-foreground truncate px-4">
+                                {/* Use displayedSiteName state directly, provide default if still null/empty */}
+                                {displayedSiteName || "WP Offramp Preview"}
+                            </div>
+                            <div className="w-10"></div>
+                        </div>
+                        {/* --- END MODIFIED PREVIEW HEADER --- */}
                         <div className="min-h-[500px] overflow-hidden relative w-full bg-white">{renderPreviewArea()}</div>
                     </div>
                 </div>
 
-                {/* --- Waitlist Form Instance REMOVED FROM HERE --- */}
+                 {/* --- Waitlist Form Instance REMOVED FROM HERE --- */}
 
 
                 {/* Migration Card */}
