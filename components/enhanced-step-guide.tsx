@@ -24,7 +24,7 @@ const steps = [
  {
   id: 3,
   title: "Access GitHub Dashboard",
-  description: "Navigate to your GitHub dashboard where you'll manage your repository and project files.",
+  description: "Navigate to your GitHub dashboard where you'll add and manage your repository and project files.",
   image: "/step3.png", // Changed path
  },
  {
@@ -59,8 +59,8 @@ const steps = [
  },
  {
   id: 9,
-  title: "Manage Repository Access",
-  description: "Configure repository settings and manage access for collaborators to work on your project.",
+  title: "Add New Project on Vercel",
+  description: "Click 'Add New' to get started.",
   image: "/step9.png", // Changed path
  },
  {
@@ -72,7 +72,7 @@ const steps = [
  {
   id: 11,
   title: "Deploy Your Project",
-  description: "Finalize your project setup and deploy it to make it accessible online with just a click.",
+  description: "Finalize your project setup and deploy it to make it accessible with just a click. (Self-hosting is also an option since you have all the files you need in the zip!)",
   image: "/step11.png", // Changed path
  },
 ]
