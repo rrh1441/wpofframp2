@@ -91,9 +91,6 @@ export default function Home() {
               <Link href="#details">How It Works</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="#details">Themes</Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
               <Link href="#who-is-it-for">Who It's For</Link>
             </Button>
             <Button size="sm" asChild>
@@ -105,9 +102,6 @@ export default function Home() {
           <div className="sm:hidden px-4 pt-2 pb-4 space-y-2">
             <Button variant="ghost" size="sm" className="w-full" asChild>
               <Link href="#details">How It Works</Link>
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full" asChild>
-              <Link href="#details">Themes</Link>
             </Button>
             <Button variant="ghost" size="sm" className="w-full" asChild>
               <Link href="#who-is-it-for">Who It's For</Link>
