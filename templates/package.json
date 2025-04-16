@@ -1,28 +1,29 @@
 {
-    "name": "wp-offramp-generated-site",
-    "version": "0.1.0",
-    "private": true,
-    "scripts": {
-      "dev": "next dev",
-      "build": "next build",
-      "start": "next start",
-      "lint": "next lint"
-    },
-    "dependencies": {
-      "@next/mdx": "^14.2.5", // Or your current Next.js version
-      "next": "^14.2.5",      // Or your current Next.js version
-      "react": "^18",
-      "react-dom": "^18"
-    },
-    "devDependencies": {
-      "@types/node": "^20",
-      "@types/react": "^18",
-      "@types/react-dom": "^18",
-      "eslint": "^8",
-      "eslint-config-next": "^14.2.5", // Or your current Next.js version
-      "postcss": "^8",
-      "tailwindcss": "^3.4.1",
-      "tailwindcss-animate": "^1.0.7", // If using animations
-      "typescript": "^5"
-    }
+  "name": "wpofframp-generated-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@next/mdx": "^14.2.5",
+    "next": "^14.2.5",
+    "react": "^18",
+    "react-dom": "^18",
+    "date-fns": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5"
   }
+}
