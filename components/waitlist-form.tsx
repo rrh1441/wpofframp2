@@ -1,22 +1,15 @@
-// components/waitlist-form.tsx
+// --- components/waitlist-form.tsx ---
 "use client";
 
 import React, { useState, useCallback, FormEvent } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
-import supabase from '@/lib/supabaseClient'; // Correct default import
+import supabase from '@/lib/supabaseClient';
 
-// Basic email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function WaitlistForm() {
@@ -31,7 +24,6 @@ export function WaitlistForm() {
             toast.error('Please enter your email address.');
             return;
         }
-
         if (!EMAIL_REGEX.test(trimmedEmail)) {
             toast.error('Please enter a valid email address.');
             return;
@@ -41,61 +33,46 @@ export function WaitlistForm() {
         const toastId = toast.loading('Submitting your email...');
 
         try {
-            // Insert into Supabase
             const { error } = await supabase
                 .from('waitlist_submissions')
                 .insert({ email: trimmedEmail })
-                .select() // Optionally select to confirm insert, though not strictly needed here
-                .throwOnError(); // Throws error on failure, including RLS or constraints
+                .select()
+                .throwOnError();
 
-            // Success
             toast.success('Thanks for joining the waitlist!', { id: toastId });
-            setEmail(''); // Clear input on success
-
+            setEmail('');
         } catch (error: any) {
             console.error("Waitlist submission error:", error);
-            toast.dismiss(toastId); // Dismiss loading toast
-
-            // Handle specific Supabase unique constraint violation (duplicate email)
-            if (error?.code === '23505') { // PostgreSQL unique violation code
+            toast.dismiss(toastId);
+            if (error?.code === '23505') {
                 toast.error('This email is already on the waitlist.');
             } else {
-                toast.error(`Submission failed: ${error.message || 'Please try again.'}`);
+                // Ensure the specific RLS error message is displayed if available
+                const message = error.message.includes('security policy')
+                    ? `Submission failed: ${error.message}`
+                    : `Submission failed: ${error.message || 'Please try again.'}`;
+                toast.error(message);
             }
         } finally {
-            setIsLoading(false); // Ensure loading state is reset
+            setIsLoading(false);
         }
-    }, [email]); // Dependency array includes email
+    }, [email]);
 
     return (
-        <Card className="w-full max-w-md mx-auto">
+        // --- MODIFIED className: Removed max-w-md and mx-auto ---
+        <Card className="w-full">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    Join the Waitlist
-                </CardTitle>
-                <CardDescription>
-                    Be the first to know when we launch new features.
-                </CardDescription>
+                <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" />Join the Waitlist</CardTitle>
+                <CardDescription>Be the first to know when we launch new features.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="waitlist-email">Email Address</Label>
-                        <Input
-                            id="waitlist-email"
-                            type="email"
-                            placeholder="you@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            disabled={isLoading}
-                            required // Added basic HTML5 required validation
-                        />
+                        <Input id="waitlist-email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} required/>
                     </div>
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : null}
+                        {isLoading ? (<Loader2 className="mr-2 h-4 w-4 animate-spin" />) : null}
                         {isLoading ? 'Submitting...' : 'Join Waitlist'}
                     </Button>
                 </form>
@@ -103,6 +80,3 @@ export function WaitlistForm() {
         </Card>
     );
 }
-
-// Export as default if needed elsewhere, but named export works fine for direct import
-// export default WaitlistForm;
