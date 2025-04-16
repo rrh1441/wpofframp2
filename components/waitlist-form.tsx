@@ -63,7 +63,7 @@ export function WaitlistForm() {
         <Card className="w-full">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" />Join the Waitlist</CardTitle>
-                <CardDescription>Be the first to know when we launch new features.</CardDescription>
+                <CardDescription>Be the first to know when we launch new features and capabilities. Multi-page and full-site migration coming soon, along with custom themes and managed migrations.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
