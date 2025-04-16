@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Leave WordPress Behind',
   generator: 'v0.dev + gemini + claude + chatgpt',
   icons: {
-    icon: '/favicon.ico', // Make sure this file exists in the /public folder
+    icon: '/favicon.ico', // Make  sure this file exists in the /public folder
   },
 }
 
