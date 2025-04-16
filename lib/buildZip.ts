@@ -1,9 +1,10 @@
-// lib/buildZip.ts
+// lib/buildZip.ts (Attempting Matrix without PostCard component)
 import fs from 'fs/promises';
 import path from 'path';
 import archiver from 'archiver';
 import { Writable } from 'stream';
-import { ThemeKey } from './constants';
+import { ThemeKey } from './constants'; // Assuming constants.ts defines ThemeKey
+import { formatDistanceToNow } from 'date-fns'; // Import date-fns here
 
 // Define the structure for homepage post data passed to the function
 interface HomepagePostData {
@@ -25,6 +26,16 @@ interface BuildZipArgs {
     mostRecentPostSlug: string;
 }
 
+// Helper function to format date (moved here for use in generated code)
+function formatDateDistance(isoDate: string): string {
+    try {
+        return formatDistanceToNow(new Date(isoDate), { addSuffix: true });
+    } catch (e) {
+        console.warn(`Error formatting date: ${isoDate}`, e);
+        return isoDate; // Fallback
+    }
+}
+
 export async function buildZip({
     theme,
     homepagePosts,
@@ -34,14 +45,7 @@ export async function buildZip({
 }: BuildZipArgs): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
         const outputBuffers: Buffer[] = [];
-        // *** Correctly resolve templateDir relative to the current file's directory ***
-        // This assumes 'templates' is in the project root relative to where buildZip.ts lives
-        // If buildZip.ts is in /lib, and templates is in /templates, this needs adjustment.
-        // Assuming standard structure where buildZip.ts is in /lib and templates is in /
-        // const templateDir = path.resolve(__dirname, '../../templates'); // Go up from lib, then into templates
-        // ** Safer Approach: Rely on process.cwd() - ASSUMING CWD is project root **
         const templateDir = path.join(process.cwd(), 'templates');
-
 
         // --- Stream Setup ---
         const converter = new Writable({
@@ -66,17 +70,14 @@ export async function buildZip({
         const addTemplateFile = async (sourcePath: string, archivePath: string) => {
             const fullSourcePath = path.join(templateDir, sourcePath);
             try {
-                await fs.access(fullSourcePath); // Check if file exists
-                // Read as buffer to avoid potential encoding issues with direct piping? Maybe overkill.
-                // const fileBuffer = await fs.readFile(fullSourcePath);
-                // archive.append(fileBuffer, { name: archivePath });
-                archive.file(fullSourcePath, { name: archivePath }); // Archiver's built-in file handling is usually robust
+                await fs.access(fullSourcePath);
+                archive.file(fullSourcePath, { name: archivePath });
                 console.log(`Added ${archivePath} from template: ${fullSourcePath}`);
             } catch (err: any) {
                 if (err.code === 'ENOENT') {
                     console.error(`❌ CRITICAL ERROR: Template file not found: ${fullSourcePath}`);
-                    // Reject if critical files are missing
-                    if (['components/Layout.tsx', 'app/layout.tsx', 'app/globals.css', 'package.json'].includes(sourcePath) || (theme === 'matrix' && sourcePath === 'components/post-card.tsx') || (theme !== 'matrix' && sourcePath === 'app/page.tsx') ) {
+                     // Reject if critical files are missing (post-card is no longer checked here)
+                     if (['components/Layout.tsx', 'app/layout.tsx', 'app/globals.css', 'package.json'].includes(sourcePath) || (theme !== 'matrix' && sourcePath === 'app/page.tsx') ) {
                         reject(new Error(`Missing critical template file: ${sourcePath}. Build cannot proceed.`));
                     } else {
                          console.warn(`Non-critical template file not found, skipping: ${fullSourcePath}`);
@@ -90,13 +91,24 @@ export async function buildZip({
 
         // --- 1. Generate or Read app/page.tsx based on theme ---
         if (theme === 'matrix') {
-            console.log('Generating app/page.tsx for Matrix theme...');
-            const matrixHomepageContent = `// app/page.tsx (Matrix Theme)
+            console.log('Generating app/page.tsx for Matrix theme (inline rendering)...');
+            // ** MODIFIED: Generate inline rendering instead of using PostCard **
+            const matrixHomepageContent = `// app/page.tsx (Matrix Theme - Inline Rendering)
 import Link from 'next/link';
-import { PostCard } from '../components/post-card'; // Ensure PostCard is included for Matrix
+import { formatDistanceToNow } from 'date-fns'; // Need date-fns for formatting
 
-// Data is embedded directly for simplicity in the generated file
+// Data is embedded directly
 const homepagePosts = ${JSON.stringify(homepagePosts, null, 2)};
+
+// Helper function directly in the generated file
+function formatDateDistance(isoDate: string): string {
+    try {
+        return formatDistanceToNow(new Date(isoDate), { addSuffix: true });
+    } catch (e) {
+        // console.warn(\`Error formatting date: \${isoDate}\`, e);
+        return isoDate; // Fallback
+    }
+}
 
 export default function HomePage() {
   return (
@@ -107,15 +119,36 @@ export default function HomePage() {
           {homepagePosts.length > 0 ? (
             homepagePosts.map((post) => {
               const slug = post.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase() || \`post-\${post.id}\`;
+              const postLink = \`/posts/\${slug}\`;
+              // Basic HTML stripping for excerpt
+              const cleanExcerpt = post.excerpt.replace(/<[^>]*>?/gm, '');
+              const formattedDate = formatDateDistance(post.date);
+
               return (
-                <PostCard
-                  key={post.id}
-                  slug={\`/posts/\${slug}\`}
-                  title={post.title}
-                  date={post.date}
-                  author={post.authorName}
-                  excerpt={post.excerpt.replace(/<[^>]*>?/gm, '')}
-                />
+                // Replicate PostCard structure and styling directly
+                <div key={post.id} className="border border-green-700 bg-black/50 hover:bg-black/80 transition-colors p-4 rounded">
+                  <div className="text-xs mb-1">
+                    <span className="text-green-300">file://</span>
+                    <span className="text-green-500">{slug}.mdx</span>
+                  </div>
+
+                  <Link href={postLink} className="text-lg font-bold text-green-400 hover:text-green-200 transition-colors block truncate">
+                    {post.title}
+                  </Link>
+
+                  <div className="mt-2 text-sm text-green-400/80">
+                    <span className="mr-4">@{post.authorName || 'unknown'}</span>
+                    <span className="opacity-70">{formattedDate}</span>
+                  </div>
+
+                  <p className="mt-2 text-sm text-green-300/90 line-clamp-2">{cleanExcerpt}</p>
+
+                  <div className="mt-3 text-xs">
+                    <Link href={postLink} className="text-green-400 hover:text-green-300 border-b border-green-700 hover:border-green-400 transition-colors">
+                      cat {slug}.mdx | more
+                    </Link>
+                  </div>
+                </div>
               );
             })
           ) : (
@@ -129,12 +162,10 @@ export default function HomePage() {
             archive.append(Buffer.from(matrixHomepageContent, 'utf8'), { name: 'app/page.tsx' });
 
         } else {
-            // *** THIS IS THE CORRECTED BLOCK for Ghibli/Modern ***
+            // For Modern or Ghibli, use the template page.tsx that loads page.mdx
             console.log(`Using MDX fallback app/page.tsx for ${theme} theme...`);
-            // Add the template file that renders MDX
             await addTemplateFile('app/page.tsx', 'app/page.tsx');
 
-            // Also add the corresponding MDX content file it needs
             const fallbackMdxContent = `---
 title: Welcome to Your Migrated Site!
 author: WP Offramp
@@ -146,22 +177,13 @@ date: ${new Date().toISOString().split('T')[0]}
 This is the homepage content for your site migrated with WP Offramp using the **${theme}** theme.
 
 You can edit this content in the \`app/page.mdx\` file.
-
-Here's some example Markdown content:
-
-* List item one
-* List item two
-
-> A sample blockquote. Isn't Markdown neat?
-
-Learn more about Next.js and MDX to customize your site further!
 `;
             archive.append(Buffer.from(fallbackMdxContent, 'utf8'), { name: 'app/page.mdx' });
             console.log('Added fallback app/page.mdx.');
-            // *** END OF CORRECTED BLOCK ***
         }
 
         // --- 2. Generate Dynamic Post Page (app/posts/[slug]/page.tsx) ---
+        // (Content remains the same as before)
         console.log(`Generating post page at app/posts/${mostRecentPostSlug}/page.tsx...`);
         const postPageContent = `// app/posts/${mostRecentPostSlug}/page.tsx
 import { promises as fs } from 'fs';
@@ -177,47 +199,27 @@ export async function generateStaticParams() {
 
 export default async function PostPage({ params }: { params: { slug: string } }) {
   const postSlug = params.slug;
-
   if (postSlug !== '${mostRecentPostSlug}') {
     return <div>Error: Post slug mismatch. Expected '${mostRecentPostSlug}', got '\${postSlug}'.</div>;
   }
-
   const mdxSource = \`${mostRecentPostMdx.replace(/`/g, '\\`')}\`;
-
   try {
     const { content, frontmatter } = await compileMDX<{
-      title: string;
-      date: string;
-      author?: string;
-      featuredImage?: string;
+      title: string; date: string; author?: string; featuredImage?: string;
     }>({
       source: mdxSource,
       components,
       options: { parseFrontmatter: true },
     });
-
-    return (
-      <Layout frontmatter={frontmatter}>
-        {content}
-      </Layout>
-    );
+    return (<Layout frontmatter={frontmatter}>{content}</Layout>);
   } catch (error: any) {
     console.error('Error compiling MDX for post:', postSlug, error);
-    return (
-      <div>
-        <h1>Error Compiling Post</h1>
-        <pre>Slug: {postSlug}</pre>
-        <pre>Error: {error.message}</pre>
-      </div>
-    );
+    return (<div><h1>Error Compiling Post</h1><pre>Slug: {postSlug}</pre><pre>Error: {error.message}</pre></div>);
   }
 }
-
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   if (params.slug === '${mostRecentPostSlug}') {
-    return {
-      title: '${mostRecentPostTitle.replace(/'/g, "\\'")}',
-    };
+    return { title: '${mostRecentPostTitle.replace(/'/g, "\\'")}' };
   }
   return { title: 'Post Not Found' };
 }`;
@@ -228,12 +230,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
         await addTemplateFile('components/Layout.tsx', 'components/Layout.tsx');
 
         // --- 4. Conditionally Add PostCard Component ---
-        if (theme === 'matrix') {
-            console.log('Adding components/post-card.tsx for Matrix theme...');
-            await addTemplateFile('components/post-card.tsx', 'components/post-card.tsx');
-        } else {
-            console.log(`Skipping components/post-card.tsx for ${theme} theme.`);
-        }
+        // ** REMOVED THIS ENTIRE BLOCK **
+        // if (theme === 'matrix') {
+        //     console.log('Adding components/post-card.tsx for Matrix theme...');
+        //     await addTemplateFile('components/post-card.tsx', 'components/post-card.tsx');
+        // } else {
+        //     console.log(`Skipping components/post-card.tsx for ${theme} theme.`);
+        // }
+        console.log('Skipping addTemplateFile for components/post-card.tsx entirely.');
+
 
         // --- 5. Add Static Project Files ---
         console.log('Adding static project files...');
@@ -242,7 +247,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
             { src: 'postcss.config.mjs', dest: 'postcss.config.mjs' },
             { src: 'tsconfig.json', dest: 'tsconfig.json' },
             { src: 'next.config.mjs', dest: 'next.config.mjs' },
-             { src: 'vercel.json', dest: 'vercel.json' }, // Include template vercel.json IF it exists and is desired
+             { src: 'vercel.json', dest: 'vercel.json' },
             { src: 'package.json', dest: 'package.json' },
             { src: '.gitignore', dest: '.gitignore' },
             { src: 'app/layout.tsx', dest: 'app/layout.tsx' },
@@ -250,7 +255,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
         ];
 
         for (const file of staticFiles) {
-            // Use addTemplateFile helper which includes error handling/logging
             await addTemplateFile(file.src, file.dest);
         }
 
