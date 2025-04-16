@@ -30,7 +30,6 @@ import EnhancedStepGuide from "@/components/enhanced-step-guide"; // Import the 
 const themeKeys = ["modern", "matrix", "ghibli"];
 
 const whoIsItForData = [
-  // ... (whoIsItForData remains the same)
   {
     icon: BarChartBig,
     title: "Content Creators & Bloggers",
@@ -88,9 +87,13 @@ export default function Home() {
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
+          {/* --- Desktop Nav Updated --- */}
           <nav className="hidden sm:flex items-center gap-6">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="#details">How It Works</Link>
+              <Link href="#details">About</Link> {/* Renamed */}
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="#how-to-guide">How To</Link> {/* Added */}
             </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link href="#who-is-it-for">Who It's For</Link>
@@ -99,11 +102,16 @@ export default function Home() {
               <Link href="#top">Try Now</Link>
             </Button>
           </nav>
+          {/* --- End Desktop Nav --- */}
         </div>
+        {/* --- Mobile Nav Updated --- */}
         {mobileMenuOpen && (
           <div className="sm:hidden px-4 pt-2 pb-4 space-y-2 border-b">
             <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-              <Link href="#details" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
+              <Link href="#details" onClick={() => setMobileMenuOpen(false)}>About</Link> {/* Renamed */}
+            </Button>
+            <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+              <Link href="#how-to-guide" onClick={() => setMobileMenuOpen(false)}>How To</Link> {/* Added */}
             </Button>
             <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
               <Link href="#who-is-it-for" onClick={() => setMobileMenuOpen(false)}>Who It's For</Link>
@@ -113,6 +121,7 @@ export default function Home() {
             </Button>
           </div>
         )}
+        {/* --- End Mobile Nav --- */}
       </header>
 
       <main className="flex-1">
@@ -134,55 +143,52 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section 2: NEW Step-by-Step Guide */}
-        {/* ADJUSTED PADDING HERE: Reduced top padding, kept bottom padding */}
-        <section className="w-full pt-12 pb-12 md:pb-24 lg:pb-32 bg-background border-t">
+        {/* Section 2: Step-by-Step Guide */}
+        {/* --- Added id="how-to-guide" --- */}
+        <section id="how-to-guide" className="w-full pt-12 pb-12 md:pb-24 lg:pb-32 bg-background border-t">
           <div className="container px-4 md:px-6">
              <div className="flex flex-col items-center space-y-8">
-               {/* Optional Heading for the Guide Section - Uncomment if desired */}
-               {/*
-               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-4 md:mb-8">
+               {/* Optional Heading */}
+               {/* <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center">
                  From WordPress to Vercel: Step-by-Step
-               </h2>
-               */}
+               </h2> */}
                <EnhancedStepGuide />
              </div>
           </div>
         </section>
-        {/* End New Section */}
+        {/* --- End Step Guide Section --- */}
 
-        {/* Section 3: How It Works / Details */}
+        {/* Section 3: "About" / Details */}
+        {/* --- This section now corresponds to the "About" link --- */}
         <section id="details" className="w-full py-12 md:py-24 lg:py-32 bg-muted border-t">
           <div className="container px-4 md:px-6 max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 xl:gap-20">
               <div className="flex flex-col space-y-8">
                 <div className="space-y-4">
-                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">How It Works</h2>
+                  {/* --- You might want to update this H2 text to match "About" --- */}
+                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">How WP Offramp Works</h2>
                   <p className="text-muted-foreground md:text-lg">Three simple steps to transform your WordPress site</p>
                 </div>
                 <div className="grid gap-6">
                   {[...Array(3)].map((_, idx) => {
-                    // ... (How It Works Card mapping remains the same)
-                     const steps = [
+                    const steps = [
                       {
-                        title: "Enter Your URL",
-                        description: "Paste your WordPress site URL or choose example",
+                        title: "1. Enter Your URL", // Changed title slightly
+                        description: "Paste your WordPress site URL or choose an example.",
                       },
                       {
-                        title: "Preview Themes",
-                        description: "Instantly switch between beautiful themes",
+                        title: "2. Preview & Download", // Changed title slightly
+                        description: "Instantly preview themes and download your Next.js ZIP.",
                       },
                       {
-                        title: "Migrate & Deploy",
-                        description: "Download your new Next.js project as a ZIP to deploy",
+                        title: "3. Deploy Anywhere", // Changed title slightly
+                        description: "Push to GitHub and deploy seamlessly on Vercel or elsewhere.",
                       },
                     ];
                     return (
                       <Card key={idx} className="h-full flex flex-col">
                         <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
-                            {idx + 1}
-                          </div>
+                          {/* Removed number div, incorporated into title */}
                           <CardTitle className="text-xl">{steps[idx].title}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex-grow">
@@ -194,29 +200,30 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex flex-col space-y-8">
+                {/* --- You might want to update this H2 text to match "About" --- */}
                 <div className="space-y-4">
-                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Beautiful Themes</h2>
-                  <p className="text-muted-foreground md:text-lg">Make your content shine</p>
+                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Key Features</h2>
+                  <p className="text-muted-foreground md:text-lg">Modern tech, zero hassle.</p>
                 </div>
                 <div className="grid grid-cols-1 gap-6">
-                  {themeKeys.map((key, index) => {
-                    // ... (Themes Card mapping remains the same)
-                     const theme = THEMES[key as keyof typeof THEMES];
-                    if (!theme) return null;
-                    return (
-                      <Card key={key} className="h-full flex flex-col">
+                   {/* Simplified this part, maybe list features instead of themes? */}
+                   {/* Example Feature List (replace theme mapping) */}
+                   {[
+                     { icon: Rocket, title: "Blazing Fast Speed", description: "Leverage Next.js static generation for instant page loads."},
+                     { icon: Code2, title: "Modern Stack", description: "Built with Next.js, React, TypeScript, and Tailwind CSS."},
+                     { icon: ShieldCheck, title: "Enhanced Security", description: "Reduce attack surface compared to traditional WordPress setups."},
+                     { icon: Sparkles, title: "Easy Deployment", description: "Deploy effortlessly via GitHub and Vercel."},
+                   ].map((feature, index) => (
+                      <Card key={index} className="h-full flex flex-col">
                         <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
-                            {index + 1}
-                          </div>
-                          <CardTitle className="text-xl">{theme.name}</CardTitle>
+                           <feature.icon className="h-6 w-6 text-primary shrink-0" aria-hidden="true" />
+                           <CardTitle className="text-xl">{feature.title}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex-grow">
-                          <p className="text-sm text-muted-foreground">{theme.description}</p>
+                           <p className="text-sm text-muted-foreground">{feature.description}</p>
                         </CardContent>
                       </Card>
-                    );
-                  })}
+                   ))}
                 </div>
               </div>
             </div>
@@ -232,7 +239,6 @@ export default function Home() {
 
         {/* Section 4: Who Is It For */}
         <section id="who-is-it-for" className="w-full py-12 md:py-24 lg:py-32 border-t">
-          {/* ... (Who It's For section remains the same) ... */}
            <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-8 text-center">
               <div className="space-y-3">
@@ -260,7 +266,6 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full border-t py-6 md:py-0">
-        {/* ... (Footer remains the same) ... */}
          <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
             © {currentYear} WP Offramp. All rights reserved.
