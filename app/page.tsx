@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import HeroPreview from "@/components/hero-preview";
 import { THEMES } from "@/lib/constants";
+import EnhancedStepGuide from "@/components/enhanced-step-guide"; // <-- Import the new component
 
 const themeKeys = ["modern", "matrix", "ghibli"];
 
@@ -98,21 +99,22 @@ export default function Home() {
           </nav>
         </div>
         {mobileMenuOpen && (
-          <div className="sm:hidden px-4 pt-2 pb-4 space-y-2">
-            <Button variant="ghost" size="sm" className="w-full" asChild>
-              <Link href="#details">How It Works</Link>
+          <div className="sm:hidden px-4 pt-2 pb-4 space-y-2 border-b"> {/* Added border-b */}
+            <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+              <Link href="#details" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
             </Button>
-            <Button variant="ghost" size="sm" className="w-full" asChild>
-              <Link href="#who-is-it-for">Who It's For</Link>
+            <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+              <Link href="#who-is-it-for" onClick={() => setMobileMenuOpen(false)}>Who It's For</Link>
             </Button>
             <Button size="sm" className="w-full" asChild>
-              <Link href="#top">Try Now</Link>
+              <Link href="#top" onClick={() => setMobileMenuOpen(false)}>Try Now</Link>
             </Button>
           </div>
         )}
       </header>
 
       <main className="flex-1">
+        {/* Section 1: Hero Preview */}
         <section id="top" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-10">
@@ -130,7 +132,24 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="details" className="w-full py-12 md:py-24 lg:py-32 bg-muted">
+        {/* Section 2: NEW Step-by-Step Guide */}
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-background border-t"> {/* Adjusted background and added border */}
+          <div className="container px-4 md:px-6">
+             <div className="flex flex-col items-center space-y-8"> {/* Centering container */}
+               {/* Optional Heading for the Guide Section */}
+               {/*
+               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center">
+                 From WordPress to Vercel: Step-by-Step
+               </h2>
+               */}
+               <EnhancedStepGuide />
+             </div>
+          </div>
+        </section>
+        {/* End New Section */}
+
+        {/* Section 3: How It Works / Details */}
+        <section id="details" className="w-full py-12 md:py-24 lg:py-32 bg-muted border-t"> {/* Added border-t */}
           <div className="container px-4 md:px-6 max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 xl:gap-20">
               <div className="flex flex-col space-y-8">
@@ -206,6 +225,7 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Section 4: Who Is It For */}
         <section id="who-is-it-for" className="w-full py-12 md:py-24 lg:py-32 border-t">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-8 text-center">
@@ -232,6 +252,7 @@ export default function Home() {
         </section>
       </main>
 
+      {/* Footer */}
       <footer className="w-full border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
