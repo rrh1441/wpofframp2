@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, Loader2, AlertCircle, AlertTriangle, CheckCircle2, Info, Mail } from "lucide-react"; // Added Mail
+import { Download, Loader2, AlertCircle, AlertTriangle, CheckCircle2, Info, Mail } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,13 +19,13 @@ import { ModernLayout } from './themes/ModernLayout';
 import { MatrixLayout } from './themes/MatrixLayout';
 import { GhibliLayout } from './themes/GhibliLayout';
 import toast, { Toaster } from 'react-hot-toast';
-import { WaitlistForm } from "@/components/waitlist-form"; // <-- Import the reusable component
+// import { WaitlistForm } from "@/components/waitlist-form"; // No longer directly needed here
+import { HeroWaitlistWrapper } from "./hero-waitlist-wrapper"; // <-- Import the new wrapper
 
-// ... (Keep existing constants, interfaces, helper functions: themeKeys, ThemeLayoutProps, themeLayoutMap, normalizeUrl, themeButtonStyles, exampleSites, ApiCheckStatus, ModalContent)
+// ... (Keep existing constants, interfaces, helper functions) ...
 
 export default function HeroPreview() {
-  // NO Waitlist state needed here
-
+  // ... (Keep existing state declarations) ...
   const [url, setUrl] = useState("");
   const [activeTheme, setActiveTheme] = useState<ThemeKey>("ghibli");
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +42,7 @@ export default function HeroPreview() {
   const [migrationError, setMigrationError] = useState<string | null>(null);
 
   // --- Existing Hooks and Functions ---
-  // ... (Keep existing useEffect, fetchHomepagePreview, checkApi, handleGenerateClick, handleExampleClick, handlePostCardClick, handleMigrate functions - they should NOT reference any waitlist state) ...
+  // ... (Keep existing useEffect, fetchHomepagePreview, checkApi, handleGenerateClick, handleExampleClick, handlePostCardClick, handleMigrate functions - NO CHANGES NEEDED HERE) ...
   useEffect(() => {
     const handler = setTimeout(() => {
       const normalizedInputUrl = url ? normalizeUrl(url) : "";
@@ -101,8 +101,9 @@ export default function HeroPreview() {
     if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent) { setMigrationError("Cannot migrate..."); return; }
    console.log(`[Migrate V2] Starting migration for ${resultsUrl} with theme ${activeTheme}`); setIsMigrating(true); setMigrationError(null); setFetchError(null); try { const payload = { wpUrl: resultsUrl, theme: activeTheme, homepagePostsData: homepagePosts.map((p, i) => ({ ...p, fullContent: i === 0 ? p.fullContent : undefined })) }; const response = await fetch("/api/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) { let msg = `Migration failed! (Status: ${response.status})`; try{const d=await response.json(); msg=d.error||msg;}catch(e){} if(response.status===429) msg="Rate limit reached."; throw new Error(msg); } const contentType = response.headers.get('Content-Type'); if (!contentType || !contentType.includes('application/zip')) throw new Error('Server did not return ZIP.'); const blob = await response.blob(); const downloadUrl = window.URL.createObjectURL(blob); const link = document.createElement('a'); link.href = downloadUrl; const disposition = response.headers.get('Content-Disposition'); let filename = `${activeTheme}_homepage_site.zip`; if (disposition?.includes('filename=')) { const matches = /filename\*?=['"]?([^'";]+)['"]?/.exec(disposition); if (matches?.[1]) filename = decodeURIComponent(matches[1]); } link.setAttribute('download', filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(downloadUrl); } catch (error: any) { console.error("[Migrate V2] Failed:", error); setMigrationError(`${error.message || "Unknown migration error"}`); } finally { setIsMigrating(false); } };
 
-  // --- Rendering Logic ---
 
+  // --- Rendering Logic ---
+  // ... (Keep existing renderSkeleton, renderPreviewArea, renderApiStatusAlert functions - NO CHANGES NEEDED HERE) ...
   const renderSkeleton = () => (
      <div className="p-6 space-y-4 animate-pulse">
          <Skeleton className="h-8 w-3/4" />
@@ -164,7 +165,6 @@ export default function HeroPreview() {
      return ( <Alert variant={variant} className="mt-4"> <Icon className={cn("h-4 w-4 mt-1 shrink-0", apiCheckStatus==='loading' && 'animate-spin')} /> <div className="ml-2"> <AlertTitle>{title}</AlertTitle> {apiCheckMessage && <AlertDescription className="whitespace-pre-wrap text-sm">{apiCheckMessage}</AlertDescription>} </div> </Alert> );
    };
 
-
   // --- Main Component Return ---
   return (
     <TooltipProvider delayDuration={100}>
@@ -172,7 +172,8 @@ export default function HeroPreview() {
       <div className="flex flex-col w-full space-y-6">
         {/* Input Card */}
         <Card id="input-section">
-          <CardHeader className="pb-4 pt-5 px-5">
+             {/* ... (Keep existing Input Card content - NO CHANGES NEEDED HERE) ... */}
+           <CardHeader className="pb-4 pt-5 px-5">
             <h3 className="text-lg font-medium">Enter Site URL or Try Example</h3>
           </CardHeader>
           <CardContent className="space-y-4 px-5 pb-5">
@@ -230,25 +231,24 @@ export default function HeroPreview() {
         </Card>
 
         {/* Preview Window */}
-        <div className="w-full">
-            <div className="border rounded-lg overflow-hidden shadow-lg bg-gray-100 w-full">
-                <div className="bg-muted border-b px-4 py-2 flex items-center text-xs">
-                    <div className="flex space-x-1.5"> <div className="w-2.5 h-2.5 rounded-full bg-red-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-green-500/90"></div> </div>
-                    <div className="flex-1 text-center font-medium text-muted-foreground truncate px-4"> {displayedSiteName || (resultsUrl ? new URL(resultsUrl).hostname : "WP Offramp Preview") } </div>
-                    <div className="w-10"></div>
-                </div>
-                <div className="min-h-[500px] overflow-hidden relative w-full bg-white">
-                    {renderPreviewArea()}
-                </div>
-            </div>
-        </div> {/* End of Preview Window Container */}
+         <div className="w-full">
+              {/* ... (Keep existing Preview Window structure - NO CHANGES NEEDED HERE) ... */}
+              <div className="border rounded-lg overflow-hidden shadow-lg bg-gray-100 w-full">
+                  <div className="bg-muted border-b px-4 py-2 flex items-center text-xs">
+                      <div className="flex space-x-1.5"> <div className="w-2.5 h-2.5 rounded-full bg-red-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-green-500/90"></div> </div>
+                      <div className="flex-1 text-center font-medium text-muted-foreground truncate px-4"> {displayedSiteName || (resultsUrl ? new URL(resultsUrl).hostname : "WP Offramp Preview") } </div>
+                      <div className="w-10"></div>
+                  </div>
+                  <div className="min-h-[500px] overflow-hidden relative w-full bg-white">
+                      {renderPreviewArea()}
+                  </div>
+              </div>
+          </div> {/* End of Preview Window Container */}
 
-         {/* --- ADDED Waitlist Form Instance #1 --- */}
+         {/* --- MODIFIED: Use the Wrapper for Waitlist Form Instance #1 --- */}
          {/* Only show this if a preview check/load is active, or if results/error exist */}
          {(isCheckingApi || isLoading || resultsUrl || fetchError) && (
-             <div className="mt-6"> {/* Added margin-top */}
-                <WaitlistForm />
-             </div>
+            <HeroWaitlistWrapper /> // <-- Render the wrapper component conditionally
          )}
          {/* --- End Waitlist Form Instance #1 --- */}
 
@@ -256,42 +256,44 @@ export default function HeroPreview() {
         {/* Migration Card */}
         {homepagePosts.length > 0 && !fetchError && resultsUrl && (
           <Card>
-            <CardHeader className="pb-2">
-              <h3 className="text-lg font-medium">Migrate & Download</h3>
-              <p className="text-sm text-muted-foreground">
-                Generates Next.js project ({THEMES[activeTheme]?.name || activeTheme} theme).
-              </p>
-            </CardHeader>
-            <CardContent>
-              {migrationError && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Migration Error</AlertTitle>
-                  <AlertDescription>{migrationError}</AlertDescription>
-                </Alert>
-              )}
-              <Button
-                size="lg"
-                onClick={handleMigrate}
-                disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent}
-                className="w-full"
-              >
-                {isMigrating ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Migrating...</>
-                ) : (
-                  <><Download className="mr-2 h-4 w-4" />Migrate & Download ZIP</>
+                {/* ... (Keep existing Migration Card content - NO CHANGES NEEDED HERE) ... */}
+                <CardHeader className="pb-2">
+                <h3 className="text-lg font-medium">Migrate & Download</h3>
+                <p className="text-sm text-muted-foreground">
+                    Generates Next.js project ({THEMES[activeTheme]?.name || activeTheme} theme).
+                </p>
+                </CardHeader>
+                <CardContent>
+                {migrationError && (
+                    <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Migration Error</AlertTitle>
+                    <AlertDescription>{migrationError}</AlertDescription>
+                    </Alert>
                 )}
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                Free migration limited per session.
-              </p>
-            </CardContent>
+                <Button
+                    size="lg"
+                    onClick={handleMigrate}
+                    disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent}
+                    className="w-full"
+                >
+                    {isMigrating ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Migrating...</>
+                    ) : (
+                    <><Download className="mr-2 h-4 w-4" />Migrate & Download ZIP</>
+                    )}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                    Free migration limited per session.
+                </p>
+                </CardContent>
           </Card>
         )}
 
         {/* Modal Dialog */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="sm:max-w-[80%] lg:max-w-[1000px] max-h-[90vh] flex flex-col p-0">
+             {/* ... (Keep existing Modal Dialog content - NO CHANGES NEEDED HERE) ... */}
+             <DialogContent className="sm:max-w-[80%] lg:max-w-[1000px] max-h-[90vh] flex flex-col p-0">
                  <DialogHeader className="flex-shrink-0 px-6 pt-4 pb-2 pr-16 border-b">
                     <DialogTitle className="truncate">{modalPostContent?.title || "Post Preview"}</DialogTitle>
                  </DialogHeader>
