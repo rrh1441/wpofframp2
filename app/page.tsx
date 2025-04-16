@@ -1,11 +1,12 @@
-// app/page.tsx (Applying flex properties to Card and CardContent)
+// app/page.tsx
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Rocket, Sparkles, ShieldCheck, BarChartBig, Code2, ArrowRight, BriefcaseBusiness, Palette } from "lucide-react";
+import { Rocket, Sparkles, ShieldCheck, BarChartBig, Code2, ArrowRight, BriefcaseBusiness, Palette, Mail } from "lucide-react"; // Added Mail
 import HeroPreview from "@/components/hero-preview";
 import { THEMES } from "@/lib/constants";
+import { WaitlistForm } from "@/components/waitlist-form"; // <-- Import the reusable component
 
 // Theme array without 'drudge'
 const themeKeys = ['modern', 'matrix', 'ghibli'];
@@ -66,6 +67,9 @@ export default function Home() {
               </Button>
               <Button variant="ghost" size="sm" asChild>
                  <Link href="#who-is-it-for">Who It's For</Link>
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                 <Link href="#waitlist">Join Waitlist</Link> {/* Added link to waitlist */}
                 </Button>
               <Button size="sm" asChild>
                 <Link href="#top">Try Now</Link>
@@ -211,6 +215,18 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* --- ADDED Waitlist Form Instance #2 Section --- */}
+        <section id="waitlist" className="w-full py-12 md:py-24 lg:py-32 border-t bg-muted">
+          <div className="container px-4 md:px-6 flex flex-col items-center">
+             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl mb-8 text-center">
+               Stay Updated
+             </h2>
+             <WaitlistForm />
+          </div>
+        </section>
+        {/* --- End Waitlist Form Instance #2 Section --- */}
+
       </main>
 
       {/* Footer - Updated */}
