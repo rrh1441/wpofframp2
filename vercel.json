@@ -1,0 +1,9 @@
+{
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "templates/**"
+    }
+  }
+}
