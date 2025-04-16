@@ -4,11 +4,9 @@
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-// Removed CardTitle, CardDescription if no longer needed elsewhere here
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// Removed Mail icon
 import { Download, Loader2, AlertCircle, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,10 +19,9 @@ import { ModernLayout } from './themes/ModernLayout';
 import { MatrixLayout } from './themes/MatrixLayout';
 import { GhibliLayout } from './themes/GhibliLayout';
 import toast, { Toaster } from 'react-hot-toast';
-// Removed Supabase import
-// import { supabase } from '@/lib/supabaseClient';
+import { WaitlistForm } from "@/components/waitlist-form"; // <-- Import the reusable component
 
-// ... (Keep existing constants and interfaces EXCEPT EMAIL_REGEX)
+// ... (Keep existing constants and interfaces)
 const themeKeys = ['modern', 'matrix', 'ghibli'] as ThemeKey[];
 interface ThemeLayoutProps { posts?: HomepagePost[]; mdxContent?: string; onClickPost?: (index: number) => void; websiteName?: string; }
 const themeLayoutMap: Record<ThemeKey, React.FC<ThemeLayoutProps>> = { modern: ModernLayout, matrix: MatrixLayout, ghibli: GhibliLayout, };
@@ -33,11 +30,10 @@ const themeButtonStyles: Record<ThemeKey, string> = { modern: "bg-white hover:bg
 const exampleSites = [ { name: "Harvard Gazette", url: "https://news.harvard.edu/gazette/" }, { name: "Minimalist Baker", url: "https://minimalistbaker.com/" }, ];
 type ApiCheckStatus = 'idle' | 'loading' | 'success' | 'error';
 type ModalContent = { title: string; mdx: string; id: number; link: string; } | null;
-// Removed EMAIL_REGEX
 
 
 export default function HeroPreview() {
-  // ... (Keep existing state variables EXCEPT waitlistEmail, isSubmittingWaitlist)
+  // Waitlist state is NOT needed here - it's managed within WaitlistForm
   const [url, setUrl] = useState("");
   const [activeTheme, setActiveTheme] = useState<ThemeKey>("ghibli");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,9 +49,7 @@ export default function HeroPreview() {
   const [modalPostContent, setModalPostContent] = useState<ModalContent>(null);
   const [migrationError, setMigrationError] = useState<string | null>(null);
 
-  // --- Waitlist State Removed ---
-
-  // ... (Keep existing useEffect, fetchHomepagePreview, checkApi functions)
+  // ... (Keep existing useEffect, fetchHomepagePreview, checkApi, handleGenerateClick, handleExampleClick, handlePostCardClick, handleMigrate functions - they should NOT reference isSubmittingWaitlist)
   useEffect(() => {
     const handler = setTimeout(() => {
       const normalizedInputUrl = url ? normalizeUrl(url) : "";
@@ -93,42 +87,32 @@ export default function HeroPreview() {
     } finally { setIsCheckingApi(false); }
   }, []);
 
-
-  // --- Update handlers to remove isSubmittingWaitlist checks ---
   const handleGenerateClick = useCallback(async () => {
     if (!url) { toast.error("Please enter a site URL."); return; }
-    // Removed isSubmittingWaitlist check
     if (isCheckingApi || isLoading || isMigrating) return;
     const targetUrl = normalizeUrl(url); if (!targetUrl) { toast.error("Invalid URL format."); return; } if (resultsUrl === targetUrl && homepagePosts.length > 0) { toast("Preview already generated.", {duration: 2000}); return; }
     setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null);
     const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl); }
-     // Removed isSubmittingWaitlist dependency
   }, [url, isCheckingApi, isLoading, isMigrating, resultsUrl, homepagePosts.length, checkApi, fetchHomepagePreview]);
 
   const handleExampleClick = useCallback(async (site: { name: string, url: string }) => {
-    // Removed isSubmittingWaitlist check
     if (isLoading || isMigrating || isCheckingApi) return;
     const targetUrl = normalizeUrl(site.url); setUrl(targetUrl);
     setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null);
     const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl, site.name); }
-    // Removed isSubmittingWaitlist dependency
   }, [isLoading, isMigrating, isCheckingApi, checkApi, fetchHomepagePreview]);
 
   const handlePostCardClick = useCallback((postIndex: number) => { if (postIndex === 0 && homepagePosts[0]?.fullContent?.mdx) { const post = homepagePosts[0]; setModalPostContent({ title: post.title, mdx: post.fullContent.mdx, id: post.id, link: post.link }); setIsModalOpen(true); } else if (postIndex > 0) { toast.dismiss(); toast("Full preview only available for the most recent post.", { duration: 4000, position: 'bottom-center' }); } else { toast.error("Could not load post content for preview.", { duration: 3000 }); } }, [homepagePosts]);
 
   const handleMigrate = async () => { const mostRecentPost = homepagePosts[0];
-    // Removed isSubmittingWaitlist check
     if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent) { setMigrationError("Cannot migrate..."); return; }
    console.log(`[Migrate V2] Starting migration for ${resultsUrl} with theme ${activeTheme}`); setIsMigrating(true); setMigrationError(null); setFetchError(null); try { const payload = { wpUrl: resultsUrl, theme: activeTheme, homepagePostsData: homepagePosts.map((p, i) => ({ ...p, fullContent: i === 0 ? p.fullContent : undefined })) }; const response = await fetch("/api/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) { let msg = `Migration failed! (Status: ${response.status})`; try{const d=await response.json(); msg=d.error||msg;}catch(e){} if(response.status===429) msg="Rate limit reached."; throw new Error(msg); } const contentType = response.headers.get('Content-Type'); if (!contentType || !contentType.includes('application/zip')) throw new Error('Server did not return ZIP.'); const blob = await response.blob(); const downloadUrl = window.URL.createObjectURL(blob); const link = document.createElement('a'); link.href = downloadUrl; const disposition = response.headers.get('Content-Disposition'); let filename = `${activeTheme}_homepage_site.zip`; if (disposition?.includes('filename=')) { const matches = /filename\*?=['"]?([^'";]+)['"]?/.exec(disposition); if (matches?.[1]) filename = decodeURIComponent(matches[1]); } link.setAttribute('download', filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(downloadUrl); } catch (error: any) { console.error("[Migrate V2] Failed:", error); setMigrationError(`${error.message || "Unknown migration error"}`); } finally { setIsMigrating(false); } };
-   // Removed isSubmittingWaitlist dependency
 
-
-  // --- Waitlist Submission Logic Removed ---
 
   // --- Rendering Logic ---
 
-  // ... (Keep existing renderSkeleton, renderPreviewArea functions)
-  const renderSkeleton = () => (
+  // ... (Keep existing renderSkeleton, renderPreviewArea, renderApiStatusAlert functions)
+ const renderSkeleton = () => (
     <div className="p-6 space-y-4 animate-pulse">
         <Skeleton className="h-8 w-3/4" />
         <Skeleton className="h-4 w-1/2" />
@@ -179,9 +163,7 @@ export default function HeroPreview() {
   };
 
 
-  // --- renderApiStatusAlert: Remove isSubmittingWaitlist check ---
   const renderApiStatusAlert = () => {
-    // Removed isSubmittingWaitlist check
     if (isLoading || (homepagePosts.length > 0 && !fetchError)) return null;
     if (apiCheckStatus === 'idle') return null;
     let variant: "default" | "destructive" | "success" = "default"; let Icon = Info; let title = "API Status";
@@ -192,16 +174,15 @@ export default function HeroPreview() {
     return ( <Alert variant={variant} className="mt-4"> <Icon className={cn("h-4 w-4 mt-1 shrink-0", apiCheckStatus==='loading' && 'animate-spin')} /> <div className="ml-2"> <AlertTitle>{title}</AlertTitle> {apiCheckMessage && <AlertDescription className="whitespace-pre-wrap text-sm">{apiCheckMessage}</AlertDescription>} </div> </Alert> );
   };
 
-
   // --- Main Component Return ---
   return (
     <TooltipProvider delayDuration={100}>
-      {/* Toaster is still useful for other toasts in this component */}
       <Toaster position="bottom-center" />
       <div className="flex flex-col w-full space-y-6">
         {/* Input Card */}
         <Card id="input-section">
-          <CardHeader className="pb-4 pt-5 px-5">
+           {/* ... (Keep existing Input Card content) ... */}
+           <CardHeader className="pb-4 pt-5 px-5">
             <h3 className="text-lg font-medium">Enter Site URL or Try Example</h3>
           </CardHeader>
           <CardContent className="space-y-4 px-5 pb-5">
@@ -212,7 +193,6 @@ export default function HeroPreview() {
                 placeholder="e.g., https://your-site.com"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                // Removed isSubmittingWaitlist check
                 disabled={isCheckingApi || isLoading || isMigrating}
               />
             </div>
@@ -223,7 +203,6 @@ export default function HeroPreview() {
                   variant="secondary"
                   size="sm"
                   onClick={() => handleExampleClick(site)}
-                   // Removed isSubmittingWaitlist check
                   disabled={isCheckingApi || isLoading || isMigrating}
                 >
                   {(isCheckingApi || isLoading) && normalizeUrl(url) === normalizeUrl(site.url) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -240,7 +219,6 @@ export default function HeroPreview() {
                     variant={'outline'}
                     size="default"
                     onClick={() => setActiveTheme(themeId)}
-                    // Removed isSubmittingWaitlist check
                     disabled={isCheckingApi || isLoading || isMigrating}
                     className={cn("h-10 px-3", themeButtonStyles[themeId], activeTheme === themeId ? 'ring-2 ring-offset-2 ring-blue-600' : '')}
                   >
@@ -251,7 +229,6 @@ export default function HeroPreview() {
             </div>
             <Button
               onClick={handleGenerateClick}
-              // Removed isSubmittingWaitlist check
               disabled={!url || isCheckingApi || isLoading || isMigrating}
               className="w-full"
               size="lg"
@@ -276,9 +253,20 @@ export default function HeroPreview() {
               </div>
           </div>
 
+         {/* --- ADDED Waitlist Form Instance #1 --- */}
+         {/* Only show this if a preview has been generated or is loading/failed */}
+         {(isLoading || isCheckingApi || resultsUrl || fetchError) && (
+             <div className="mt-0"> {/* Adjust margin if needed */}
+                <WaitlistForm />
+             </div>
+         )}
+         {/* --- End Waitlist Form Instance #1 --- */}
+
+
         {/* Migration Card */}
         {homepagePosts.length > 0 && !fetchError && resultsUrl && (
           <Card>
+            {/* ... (Keep existing Migration Card content) ... */}
             <CardHeader className="pb-2">
               <h3 className="text-lg font-medium">Migrate & Download</h3>
               <p className="text-sm text-muted-foreground">
@@ -296,7 +284,6 @@ export default function HeroPreview() {
               <Button
                 size="lg"
                 onClick={handleMigrate}
-                // Removed isSubmittingWaitlist check
                 disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent}
                 className="w-full"
               >
@@ -313,12 +300,10 @@ export default function HeroPreview() {
           </Card>
         )}
 
-        {/* --- Waitlist Signup Card REMOVED from here --- */}
-
-
         {/* Modal Dialog */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-             <DialogContent className="sm:max-w-[80%] lg:max-w-[1000px] max-h-[90vh] flex flex-col p-0">
+             {/* ... (Keep existing Modal Dialog content) ... */}
+            <DialogContent className="sm:max-w-[80%] lg:max-w-[1000px] max-h-[90vh] flex flex-col p-0">
                  <DialogHeader className="flex-shrink-0 px-6 pt-4 pb-2 pr-16 border-b">
                     <DialogTitle className="truncate">{modalPostContent?.title || "Post Preview"}</DialogTitle>
                  </DialogHeader>
