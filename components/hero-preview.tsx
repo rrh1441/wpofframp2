@@ -1,17 +1,17 @@
-// components/hero-preview.tsx (Full Code - Fixed renderSkeleton and title passing)
+// components/hero-preview.tsx
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Added CardTitle, CardDescription
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, Loader2, AlertCircle, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { Download, Loader2, AlertCircle, AlertTriangle, CheckCircle2, Info, Mail } from "lucide-react"; // Added Mail icon
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton"; // Ensure Skeleton is imported
+import { Skeleton } from "@/components/ui/skeleton";
 import { THEMES, ThemeKey } from "@/lib/constants";
 import type { HomepagePost } from "@/app/api/homepage-preview/route";
 import { cn } from "@/lib/utils";
@@ -19,9 +19,11 @@ import { ModernLayout } from './themes/ModernLayout';
 import { MatrixLayout } from './themes/MatrixLayout';
 import { GhibliLayout } from './themes/GhibliLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { supabase } from '@/lib/supabaseClient'; // <-- Import Supabase client
+
+// ... (Keep existing constants and interfaces: themeKeys, ThemeLayoutProps, themeLayoutMap, normalizeUrl, themeButtonStyles, exampleSites, ApiCheckStatus, ModalContent)
 
 const themeKeys = ['modern', 'matrix', 'ghibli'] as ThemeKey[];
-
 interface ThemeLayoutProps { posts?: HomepagePost[]; mdxContent?: string; onClickPost?: (index: number) => void; websiteName?: string; }
 const themeLayoutMap: Record<ThemeKey, React.FC<ThemeLayoutProps>> = { modern: ModernLayout, matrix: MatrixLayout, ghibli: GhibliLayout, };
 const normalizeUrl = (inputUrl: string): string => { let n = inputUrl.trim(); if (!n) return ""; if (!/^https?:\/\//i.test(n)) n = `https://${n}`; try { return new URL(n).origin; } catch (e) { return n; } };
@@ -29,6 +31,9 @@ const themeButtonStyles: Record<ThemeKey, string> = { modern: "bg-white hover:bg
 const exampleSites = [ { name: "Harvard Gazette", url: "https://news.harvard.edu/gazette/" }, { name: "Minimalist Baker", url: "https://minimalistbaker.com/" }, ];
 type ApiCheckStatus = 'idle' | 'loading' | 'success' | 'error';
 type ModalContent = { title: string; mdx: string; id: number; link: string; } | null;
+
+// Basic email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function HeroPreview() {
   const [url, setUrl] = useState("");
@@ -45,6 +50,13 @@ export default function HeroPreview() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalPostContent, setModalPostContent] = useState<ModalContent>(null);
   const [migrationError, setMigrationError] = useState<string | null>(null);
+
+  // --- Waitlist State ---
+  const [waitlistEmail, setWaitlistEmail] = useState<string>("");
+  const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState<boolean>(false);
+  // -----------------------
+
+  // ... (Keep existing useEffect, fetchHomepagePreview, checkApi, handleGenerateClick, handleExampleClick, handlePostCardClick, handleMigrate)
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -85,23 +97,83 @@ export default function HeroPreview() {
 
   const handleGenerateClick = useCallback(async () => {
     if (!url) { toast.error("Please enter a site URL."); return; }
-    if (isCheckingApi || isLoading || isMigrating) return; const targetUrl = normalizeUrl(url); if (!targetUrl) { toast.error("Invalid URL format."); return; } if (resultsUrl === targetUrl && homepagePosts.length > 0) { toast("Preview already generated.", {duration: 2000}); return; }
+    if (isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist) return; // Added isSubmittingWaitlist check
+    const targetUrl = normalizeUrl(url); if (!targetUrl) { toast.error("Invalid URL format."); return; } if (resultsUrl === targetUrl && homepagePosts.length > 0) { toast("Preview already generated.", {duration: 2000}); return; }
     setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null);
     const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl); }
-  }, [url, isCheckingApi, isLoading, isMigrating, resultsUrl, homepagePosts.length, checkApi, fetchHomepagePreview]);
+  }, [url, isCheckingApi, isLoading, isMigrating, resultsUrl, homepagePosts.length, checkApi, fetchHomepagePreview, isSubmittingWaitlist]); // Added isSubmittingWaitlist dependency
 
   const handleExampleClick = useCallback(async (site: { name: string, url: string }) => {
-    if (isLoading || isMigrating || isCheckingApi) return; const targetUrl = normalizeUrl(site.url); setUrl(targetUrl);
+    if (isLoading || isMigrating || isCheckingApi || isSubmittingWaitlist) return; // Added isSubmittingWaitlist check
+    const targetUrl = normalizeUrl(site.url); setUrl(targetUrl);
     setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null);
     const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl, site.name); } // Pass name here
-  }, [isLoading, isMigrating, isCheckingApi, checkApi, fetchHomepagePreview]);
+  }, [isLoading, isMigrating, isCheckingApi, checkApi, fetchHomepagePreview, isSubmittingWaitlist]); // Added isSubmittingWaitlist dependency
 
   const handlePostCardClick = useCallback((postIndex: number) => { if (postIndex === 0 && homepagePosts[0]?.fullContent?.mdx) { const post = homepagePosts[0]; setModalPostContent({ title: post.title, mdx: post.fullContent.mdx, id: post.id, link: post.link }); setIsModalOpen(true); } else if (postIndex > 0) { toast.dismiss(); toast("Full preview only available for the most recent post.", { duration: 4000, position: 'bottom-center' }); } else { toast.error("Could not load post content for preview.", { duration: 3000 }); } }, [homepagePosts]);
-  const handleMigrate = async () => { const mostRecentPost = homepagePosts[0]; if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent) { setMigrationError("Cannot migrate..."); return; } console.log(`[Migrate V2] Starting migration for ${resultsUrl} with theme ${activeTheme}`); setIsMigrating(true); setMigrationError(null); setFetchError(null); try { const payload = { wpUrl: resultsUrl, theme: activeTheme, homepagePostsData: homepagePosts.map((p, i) => ({ ...p, fullContent: i === 0 ? p.fullContent : undefined })) }; const response = await fetch("/api/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) { let msg = `Migration failed! (Status: ${response.status})`; try{const d=await response.json(); msg=d.error||msg;}catch(e){} if(response.status===429) msg="Rate limit reached."; throw new Error(msg); } const contentType = response.headers.get('Content-Type'); if (!contentType || !contentType.includes('application/zip')) throw new Error('Server did not return ZIP.'); const blob = await response.blob(); const downloadUrl = window.URL.createObjectURL(blob); const link = document.createElement('a'); link.href = downloadUrl; const disposition = response.headers.get('Content-Disposition'); let filename = `${activeTheme}_homepage_site.zip`; if (disposition?.includes('filename=')) { const matches = /filename\*?=['"]?([^'";]+)['"]?/.exec(disposition); if (matches?.[1]) filename = decodeURIComponent(matches[1]); } link.setAttribute('download', filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(downloadUrl); } catch (error: any) { console.error("[Migrate V2] Failed:", error); setMigrationError(`${error.message || "Unknown migration error"}`); } finally { setIsMigrating(false); } };
+
+  const handleMigrate = async () => { const mostRecentPost = homepagePosts[0]; if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent || isSubmittingWaitlist) { setMigrationError("Cannot migrate..."); return; } // Added isSubmittingWaitlist check
+   console.log(`[Migrate V2] Starting migration for ${resultsUrl} with theme ${activeTheme}`); setIsMigrating(true); setMigrationError(null); setFetchError(null); try { const payload = { wpUrl: resultsUrl, theme: activeTheme, homepagePostsData: homepagePosts.map((p, i) => ({ ...p, fullContent: i === 0 ? p.fullContent : undefined })) }; const response = await fetch("/api/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) { let msg = `Migration failed! (Status: ${response.status})`; try{const d=await response.json(); msg=d.error||msg;}catch(e){} if(response.status===429) msg="Rate limit reached."; throw new Error(msg); } const contentType = response.headers.get('Content-Type'); if (!contentType || !contentType.includes('application/zip')) throw new Error('Server did not return ZIP.'); const blob = await response.blob(); const downloadUrl = window.URL.createObjectURL(blob); const link = document.createElement('a'); link.href = downloadUrl; const disposition = response.headers.get('Content-Disposition'); let filename = `${activeTheme}_homepage_site.zip`; if (disposition?.includes('filename=')) { const matches = /filename\*?=['"]?([^'";]+)['"]?/.exec(disposition); if (matches?.[1]) filename = decodeURIComponent(matches[1]); } link.setAttribute('download', filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(downloadUrl); } catch (error: any) { console.error("[Migrate V2] Failed:", error); setMigrationError(`${error.message || "Unknown migration error"}`); } finally { setIsMigrating(false); } };
+
+  // --- Waitlist Submission Logic ---
+  const handleWaitlistSubmit = useCallback(async () => {
+    if (isSubmittingWaitlist) return; // Prevent double clicks
+
+    // Basic client-side validation
+    if (!waitlistEmail || !EMAIL_REGEX.test(waitlistEmail)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    setIsSubmittingWaitlist(true);
+    const submissionToastId = toast.loading('Submitting email...');
+
+    try {
+      // Attempt to insert the email into the Supabase table
+      const { error } = await supabase
+        .from('waitlist_submissions')
+        .insert({ email: waitlistEmail })
+        .select() // Select to confirm insert and check RLS (optional but good practice)
+        .throwOnError(); // Throw an error if Supabase returns one
+
+      // Success!
+      toast.success("You've joined the waitlist!", { id: submissionToastId });
+      setWaitlistEmail(""); // Clear the input field on success
+
+    } catch (error: any) {
+      console.error("Waitlist submission error:", error);
+
+      let errorMessage = "Could not submit email. Please try again.";
+      // Handle specific Supabase errors
+      if (error.code) { // Check if it's a Supabase error object
+          if (error.code === '23505') { // Unique constraint violation (email already exists)
+              errorMessage = "This email is already on the waitlist!";
+              // Consider it a 'success' for the user experience in this case
+              toast.success(errorMessage, { id: submissionToastId });
+              setWaitlistEmail(""); // Clear the input field even if already exists
+              return; // Exit early as it's handled
+          }
+           else if (error.code.startsWith('PGRST')) { // PostgREST error codes
+             errorMessage = `Database error (${error.code}). Please try again.`;
+           } else if (error.code.startsWith('PGRST') && error.message.includes(' RLS ')) {
+             errorMessage = `Database access error. Check setup.`;
+           }
+      } else if (error instanceof Error) {
+         // Handle generic JS/network errors
+          errorMessage = `Submission failed: ${error.message}`;
+      }
+
+      toast.error(errorMessage, { id: submissionToastId });
+
+    } finally {
+      setIsSubmittingWaitlist(false);
+    }
+  }, [waitlistEmail, isSubmittingWaitlist]); // Dependencies for useCallback
+
 
   // --- Rendering Logic ---
 
-  // *** FIXED renderSkeleton ***
+  // *** renderSkeleton *** (Keep existing code)
   const renderSkeleton = () => (
     <div className="p-6 space-y-4 animate-pulse">
         <Skeleton className="h-8 w-3/4" />
@@ -129,6 +201,7 @@ export default function HeroPreview() {
     </div>
   );
 
+  // *** renderPreviewArea *** (Keep existing code, maybe add disable checks)
   const renderPreviewArea = () => {
     const ActiveLayout = themeLayoutMap[activeTheme];
     let fallbackName = "Website Preview";
@@ -152,8 +225,11 @@ export default function HeroPreview() {
     return renderSkeleton();
   };
 
+
+  // *** renderApiStatusAlert *** (Keep existing code)
   const renderApiStatusAlert = () => {
-    if (isLoading || (homepagePosts.length > 0 && !fetchError)) return null; if (apiCheckStatus === 'idle') return null;
+    if (isLoading || (homepagePosts.length > 0 && !fetchError) || isSubmittingWaitlist) return null; // Hide during waitlist submit too
+    if (apiCheckStatus === 'idle') return null;
     let variant: "default" | "destructive" | "success" = "default"; let Icon = Info; let title = "API Status";
     if (apiCheckStatus === 'loading') { Icon = Loader2; title = "Checking API..."; variant = "default"; }
     else if (apiCheckStatus === 'success') { Icon = CheckCircle2; title = "API Check OK"; variant = "success"; }
@@ -162,6 +238,7 @@ export default function HeroPreview() {
     return ( <Alert variant={variant} className="mt-4"> <Icon className={cn("h-4 w-4 mt-1 shrink-0", apiCheckStatus==='loading' && 'animate-spin')} /> <div className="ml-2"> <AlertTitle>{title}</AlertTitle> {apiCheckMessage && <AlertDescription className="whitespace-pre-wrap text-sm">{apiCheckMessage}</AlertDescription>} </div> </Alert> );
   };
 
+
   // --- Main Component Return ---
   return (
     <TooltipProvider delayDuration={100}>
@@ -169,44 +246,167 @@ export default function HeroPreview() {
       <div className="flex flex-col w-full space-y-6">
         {/* Input Card */}
         <Card id="input-section">
-          <CardHeader className="pb-4 pt-5 px-5"> <h3 className="text-lg font-medium">Enter Site URL or Try Example</h3> </CardHeader>
+          <CardHeader className="pb-4 pt-5 px-5">
+            <h3 className="text-lg font-medium">Enter Site URL or Try Example</h3>
+          </CardHeader>
           <CardContent className="space-y-4 px-5 pb-5">
-            <div> <Input id="wordpress-url" type="url" placeholder="e.g., https://your-site.com" value={url} onChange={(e) => setUrl(e.target.value)} disabled={isCheckingApi || isLoading || isMigrating} /> </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2"> {exampleSites.map((site) => ( <Button key={site.name} variant="secondary" size="sm" onClick={() => handleExampleClick(site)} disabled={isCheckingApi || isLoading || isMigrating}> {(isCheckingApi || isLoading) && normalizeUrl(url) === normalizeUrl(site.url) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {site.name} </Button> ))} </div>
-            <div className="pt-2"> <Label className="pb-2 block text-sm font-medium">Select Preview Theme</Label> <div className="grid grid-cols-1 sm:grid-cols-3 gap-2"> {themeKeys.map((themeId) => ( <Button key={`select-${themeId}`} variant={'outline'} size="default" onClick={() => setActiveTheme(themeId)} disabled={isCheckingApi || isLoading || isMigrating} className={cn("h-10 px-3", themeButtonStyles[themeId], activeTheme === themeId ? 'ring-2 ring-offset-2 ring-blue-600' : '')} > {THEMES[themeId]?.name || themeId} </Button>))} </div> </div>
-            <Button onClick={handleGenerateClick} disabled={!url || isCheckingApi || isLoading || isMigrating} className="w-full" size="lg"> {isCheckingApi ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Checking...</>) : isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading...</>) : ("Generate Previews")} </Button>
+            <div>
+              <Input
+                id="wordpress-url"
+                type="url"
+                placeholder="e.g., https://your-site.com"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                disabled={isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist} // Disable during waitlist submit
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {exampleSites.map((site) => (
+                <Button
+                  key={site.name}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleExampleClick(site)}
+                  disabled={isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist} // Disable during waitlist submit
+                >
+                  {(isCheckingApi || isLoading) && normalizeUrl(url) === normalizeUrl(site.url) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {site.name}
+                </Button>
+              ))}
+            </div>
+            <div className="pt-2">
+              <Label className="pb-2 block text-sm font-medium">Select Preview Theme</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {themeKeys.map((themeId) => (
+                  <Button
+                    key={`select-${themeId}`}
+                    variant={'outline'}
+                    size="default"
+                    onClick={() => setActiveTheme(themeId)}
+                    disabled={isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist} // Disable during waitlist submit
+                    className={cn("h-10 px-3", themeButtonStyles[themeId], activeTheme === themeId ? 'ring-2 ring-offset-2 ring-blue-600' : '')}
+                  >
+                    {THEMES[themeId]?.name || themeId}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <Button
+              onClick={handleGenerateClick}
+              disabled={!url || isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist} // Disable during waitlist submit
+              className="w-full"
+              size="lg"
+            >
+              {isCheckingApi ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Checking...</>) : isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading...</>) : ("Generate Previews")}
+            </Button>
             {renderApiStatusAlert()}
           </CardContent>
         </Card>
 
-         {/* Preview Window */}
-         <div className="w-full">
-              <div className="border rounded-lg overflow-hidden shadow-lg bg-gray-100 w-full">
-                  <div className="bg-muted border-b px-4 py-2 flex items-center text-xs">
-                      <div className="flex space-x-1.5"> <div className="w-2.5 h-2.5 rounded-full bg-red-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-green-500/90"></div> </div>
-                      {/* Use displayedSiteName state here */}
-                      <div className="flex-1 text-center font-medium text-muted-foreground truncate px-4"> {displayedSiteName || (resultsUrl ? new URL(resultsUrl).hostname : "WP Offramp Preview") } </div>
-                      <div className="w-10"></div>
-                  </div>
-                  <div className="min-h-[500px] overflow-hidden relative w-full bg-white">
-                      {renderPreviewArea()}
-                  </div>
+        {/* --- NEW: Waitlist Signup Card --- */}
+        <Card id="waitlist-section">
+          <CardHeader className="pb-3 pt-5 px-5">
+            <CardTitle className="text-lg">Join the Waitlist</CardTitle>
+            <CardDescription>Be the first to know about new features and releases.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 px-5 pb-5">
+            <div className="flex flex-col sm:flex-row gap-2 items-end">
+              <div className="flex-grow w-full">
+                 <Label htmlFor="waitlist-email" className="sr-only">Email Address</Label> {/* Screen reader label */}
+                 <Input
+                    id="waitlist-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={waitlistEmail}
+                    onChange={(e) => setWaitlistEmail(e.target.value)}
+                    disabled={isSubmittingWaitlist || isLoading || isMigrating || isCheckingApi } // Disable during any loading state
+                 />
               </div>
-          </div>
+              <Button
+                onClick={handleWaitlistSubmit}
+                disabled={isSubmittingWaitlist || !waitlistEmail || isLoading || isMigrating || isCheckingApi} // Disable if submitting, no email, or other loading states
+                className="w-full sm:w-auto"
+              >
+                {isSubmittingWaitlist ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Joining...</>
+                ) : (
+                  <><Mail className="mr-2 h-4 w-4" /> Join Waitlist</>
+                )}
+              </Button>
+            </div>
+             {/* Optionally, add a small note about privacy or usage */}
+             <p className="text-xs text-muted-foreground text-center pt-1">
+               We respect your privacy. No spam.
+             </p>
+          </CardContent>
+        </Card>
+        {/* --- End Waitlist Card --- */}
+
+        {/* Preview Window */}
+        <div className="w-full">
+            <div className="border rounded-lg overflow-hidden shadow-lg bg-gray-100 w-full">
+                <div className="bg-muted border-b px-4 py-2 flex items-center text-xs">
+                    <div className="flex space-x-1.5"> <div className="w-2.5 h-2.5 rounded-full bg-red-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/90"></div> <div className="w-2.5 h-2.5 rounded-full bg-green-500/90"></div> </div>
+                    <div className="flex-1 text-center font-medium text-muted-foreground truncate px-4"> {displayedSiteName || (resultsUrl ? new URL(resultsUrl).hostname : "WP Offramp Preview") } </div>
+                    <div className="w-10"></div>
+                </div>
+                <div className="min-h-[500px] overflow-hidden relative w-full bg-white">
+                    {renderPreviewArea()}
+                </div>
+            </div>
+        </div>
 
         {/* Migration Card */}
-        {homepagePosts.length > 0 && !fetchError && resultsUrl && ( <Card> <CardHeader className="pb-2"> <h3 className="text-lg font-medium">Migrate & Download</h3> <p className="text-sm text-muted-foreground"> Generates Next.js project ({THEMES[activeTheme]?.name || activeTheme} theme). </p> </CardHeader> <CardContent> {migrationError && ( <Alert variant="destructive" className="mb-4"> <AlertCircle className="h-4 w-4" /> <AlertTitle>Migration Error</AlertTitle> <AlertDescription>{migrationError}</AlertDescription> </Alert> )} <Button size="lg" onClick={handleMigrate} disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent} className="w-full"> {isMigrating ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Migrating...</>) : (<><Download className="mr-2 h-4 w-4" />Migrate & Download ZIP</>)} </Button> <p className="text-xs text-muted-foreground mt-2 text-center"> Free migration limited per session. </p> </CardContent> </Card> )}
+        {homepagePosts.length > 0 && !fetchError && resultsUrl && (
+          <Card>
+            <CardHeader className="pb-2">
+              <h3 className="text-lg font-medium">Migrate & Download</h3>
+              <p className="text-sm text-muted-foreground">
+                Generates Next.js project ({THEMES[activeTheme]?.name || activeTheme} theme).
+              </p>
+            </CardHeader>
+            <CardContent>
+              {migrationError && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Migration Error</AlertTitle>
+                  <AlertDescription>{migrationError}</AlertDescription>
+                </Alert>
+              )}
+              <Button
+                size="lg"
+                onClick={handleMigrate}
+                disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent || isSubmittingWaitlist} // Disable during waitlist submit
+                className="w-full"
+              >
+                {isMigrating ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Migrating...</>
+                ) : (
+                  <><Download className="mr-2 h-4 w-4" />Migrate & Download ZIP</>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Free migration limited per session.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Modal Dialog */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
              <DialogContent className="sm:max-w-[80%] lg:max-w-[1000px] max-h-[90vh] flex flex-col p-0">
-                 <DialogHeader className="flex-shrink-0 px-6 pt-4 pb-2 pr-16 border-b"> <DialogTitle className="truncate">{modalPostContent?.title || "Post Preview"}</DialogTitle> </DialogHeader>
+                 <DialogHeader className="flex-shrink-0 px-6 pt-4 pb-2 pr-16 border-b">
+                    <DialogTitle className="truncate">{modalPostContent?.title || "Post Preview"}</DialogTitle>
+                 </DialogHeader>
                  <div className="overflow-y-auto flex-grow">
-                     {modalPostContent?.mdx && themeLayoutMap[activeTheme] ? ( React.createElement(themeLayoutMap[activeTheme], { mdxContent: modalPostContent.mdx }) ) : ( <div className="p-6">Loading content...</div> )}
+                     {modalPostContent?.mdx && themeLayoutMap[activeTheme] ? (
+                        React.createElement(themeLayoutMap[activeTheme], { mdxContent: modalPostContent.mdx })
+                     ) : (
+                        <div className="p-6">Loading content...</div>
+                     )}
                  </div>
             </DialogContent>
         </Dialog>
-
       </div>
     </TooltipProvider>
   );

@@ -86,7 +86,7 @@ export default function Home() {
                     The Escape Hatch from WordPress
                   </h1>
                   <p className="text-lg text-muted-foreground md:text-xl">
-                    Break free from bloat, performance bottlenecks, and endless updates.
+                    Break free from bloat, performance bottlenecks, and endless updates
                   </p>
                 </div>
               </div>
