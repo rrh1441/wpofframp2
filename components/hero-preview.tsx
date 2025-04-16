@@ -4,10 +4,12 @@
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+// Removed CardTitle, CardDescription if no longer needed elsewhere here
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, Loader2, AlertCircle, AlertTriangle, CheckCircle2, Info, Mail } from "lucide-react";
+// Removed Mail icon
+import { Download, Loader2, AlertCircle, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,9 +21,10 @@ import { ModernLayout } from './themes/ModernLayout';
 import { MatrixLayout } from './themes/MatrixLayout';
 import { GhibliLayout } from './themes/GhibliLayout';
 import toast, { Toaster } from 'react-hot-toast';
-import { supabase } from '@/lib/supabaseClient'; // <-- Double-check this path and the export in the file!
+// Removed Supabase import
+// import { supabase } from '@/lib/supabaseClient';
 
-// ... (Keep existing constants and interfaces: themeKeys, ThemeLayoutProps, themeLayoutMap, normalizeUrl, themeButtonStyles, exampleSites, ApiCheckStatus, ModalContent, EMAIL_REGEX)
+// ... (Keep existing constants and interfaces EXCEPT EMAIL_REGEX)
 const themeKeys = ['modern', 'matrix', 'ghibli'] as ThemeKey[];
 interface ThemeLayoutProps { posts?: HomepagePost[]; mdxContent?: string; onClickPost?: (index: number) => void; websiteName?: string; }
 const themeLayoutMap: Record<ThemeKey, React.FC<ThemeLayoutProps>> = { modern: ModernLayout, matrix: MatrixLayout, ghibli: GhibliLayout, };
@@ -30,11 +33,11 @@ const themeButtonStyles: Record<ThemeKey, string> = { modern: "bg-white hover:bg
 const exampleSites = [ { name: "Harvard Gazette", url: "https://news.harvard.edu/gazette/" }, { name: "Minimalist Baker", url: "https://minimalistbaker.com/" }, ];
 type ApiCheckStatus = 'idle' | 'loading' | 'success' | 'error';
 type ModalContent = { title: string; mdx: string; id: number; link: string; } | null;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Removed EMAIL_REGEX
 
 
 export default function HeroPreview() {
-  // ... (Keep existing state variables: url, activeTheme, isLoading, isCheckingApi, isMigrating, apiCheckStatus, etc.)
+  // ... (Keep existing state variables EXCEPT waitlistEmail, isSubmittingWaitlist)
   const [url, setUrl] = useState("");
   const [activeTheme, setActiveTheme] = useState<ThemeKey>("ghibli");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,13 +53,9 @@ export default function HeroPreview() {
   const [modalPostContent, setModalPostContent] = useState<ModalContent>(null);
   const [migrationError, setMigrationError] = useState<string | null>(null);
 
-  // --- Waitlist State ---
-  const [waitlistEmail, setWaitlistEmail] = useState<string>("");
-  const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState<boolean>(false);
-  // -----------------------
+  // --- Waitlist State Removed ---
 
-
-  // ... (Keep existing useEffect, fetchHomepagePreview, checkApi, handleGenerateClick, handleExampleClick, handlePostCardClick, handleMigrate)
+  // ... (Keep existing useEffect, fetchHomepagePreview, checkApi functions)
   useEffect(() => {
     const handler = setTimeout(() => {
       const normalizedInputUrl = url ? normalizeUrl(url) : "";
@@ -94,88 +93,41 @@ export default function HeroPreview() {
     } finally { setIsCheckingApi(false); }
   }, []);
 
+
+  // --- Update handlers to remove isSubmittingWaitlist checks ---
   const handleGenerateClick = useCallback(async () => {
     if (!url) { toast.error("Please enter a site URL."); return; }
-    if (isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist) return;
+    // Removed isSubmittingWaitlist check
+    if (isCheckingApi || isLoading || isMigrating) return;
     const targetUrl = normalizeUrl(url); if (!targetUrl) { toast.error("Invalid URL format."); return; } if (resultsUrl === targetUrl && homepagePosts.length > 0) { toast("Preview already generated.", {duration: 2000}); return; }
     setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null);
     const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl); }
-  }, [url, isCheckingApi, isLoading, isMigrating, resultsUrl, homepagePosts.length, checkApi, fetchHomepagePreview, isSubmittingWaitlist]);
+     // Removed isSubmittingWaitlist dependency
+  }, [url, isCheckingApi, isLoading, isMigrating, resultsUrl, homepagePosts.length, checkApi, fetchHomepagePreview]);
 
   const handleExampleClick = useCallback(async (site: { name: string, url: string }) => {
-    if (isLoading || isMigrating || isCheckingApi || isSubmittingWaitlist) return;
+    // Removed isSubmittingWaitlist check
+    if (isLoading || isMigrating || isCheckingApi) return;
     const targetUrl = normalizeUrl(site.url); setUrl(targetUrl);
     setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null);
     const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl, site.name); }
-  }, [isLoading, isMigrating, isCheckingApi, checkApi, fetchHomepagePreview, isSubmittingWaitlist]);
+    // Removed isSubmittingWaitlist dependency
+  }, [isLoading, isMigrating, isCheckingApi, checkApi, fetchHomepagePreview]);
 
   const handlePostCardClick = useCallback((postIndex: number) => { if (postIndex === 0 && homepagePosts[0]?.fullContent?.mdx) { const post = homepagePosts[0]; setModalPostContent({ title: post.title, mdx: post.fullContent.mdx, id: post.id, link: post.link }); setIsModalOpen(true); } else if (postIndex > 0) { toast.dismiss(); toast("Full preview only available for the most recent post.", { duration: 4000, position: 'bottom-center' }); } else { toast.error("Could not load post content for preview.", { duration: 3000 }); } }, [homepagePosts]);
 
-  const handleMigrate = async () => { const mostRecentPost = homepagePosts[0]; if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent || isSubmittingWaitlist) { setMigrationError("Cannot migrate..."); return; }
+  const handleMigrate = async () => { const mostRecentPost = homepagePosts[0];
+    // Removed isSubmittingWaitlist check
+    if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent) { setMigrationError("Cannot migrate..."); return; }
    console.log(`[Migrate V2] Starting migration for ${resultsUrl} with theme ${activeTheme}`); setIsMigrating(true); setMigrationError(null); setFetchError(null); try { const payload = { wpUrl: resultsUrl, theme: activeTheme, homepagePostsData: homepagePosts.map((p, i) => ({ ...p, fullContent: i === 0 ? p.fullContent : undefined })) }; const response = await fetch("/api/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) { let msg = `Migration failed! (Status: ${response.status})`; try{const d=await response.json(); msg=d.error||msg;}catch(e){} if(response.status===429) msg="Rate limit reached."; throw new Error(msg); } const contentType = response.headers.get('Content-Type'); if (!contentType || !contentType.includes('application/zip')) throw new Error('Server did not return ZIP.'); const blob = await response.blob(); const downloadUrl = window.URL.createObjectURL(blob); const link = document.createElement('a'); link.href = downloadUrl; const disposition = response.headers.get('Content-Disposition'); let filename = `${activeTheme}_homepage_site.zip`; if (disposition?.includes('filename=')) { const matches = /filename\*?=['"]?([^'";]+)['"]?/.exec(disposition); if (matches?.[1]) filename = decodeURIComponent(matches[1]); } link.setAttribute('download', filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(downloadUrl); } catch (error: any) { console.error("[Migrate V2] Failed:", error); setMigrationError(`${error.message || "Unknown migration error"}`); } finally { setIsMigrating(false); } };
+   // Removed isSubmittingWaitlist dependency
 
 
-  // --- Waitlist Submission Logic ---
-  const handleWaitlistSubmit = useCallback(async () => {
-    if (isSubmittingWaitlist) return;
-
-    // Defensively check if supabase client is available (addresses the error symptom, but root cause needs fixing)
-    if (!supabase) {
-        console.error("Supabase client is not available. Check import and initialization in lib/supabaseClient.ts and environment variables.");
-        toast.error("Waitlist feature is currently unavailable. Please try again later.");
-        return;
-    }
-
-    if (!waitlistEmail || !EMAIL_REGEX.test(waitlistEmail)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-
-    setIsSubmittingWaitlist(true);
-    const submissionToastId = toast.loading('Submitting email...');
-
-    try {
-      // Attempt to insert the email into the Supabase table
-      const { error } = await supabase // Now using the imported client
-        .from('waitlist_submissions')
-        .insert({ email: waitlistEmail })
-        .select()
-        .throwOnError();
-
-      toast.success("You've joined the waitlist!", { id: submissionToastId });
-      setWaitlistEmail("");
-
-    } catch (error: any) {
-      console.error("Waitlist submission error:", error);
-
-      let errorMessage = "Could not submit email. Please try again.";
-      if (error.code) {
-          if (error.code === '23505') {
-              errorMessage = "This email is already on the waitlist!";
-              toast.success(errorMessage, { id: submissionToastId });
-              setWaitlistEmail("");
-              return;
-          }
-           else if (error.code.startsWith('PGRST')) {
-             errorMessage = `Database error (${error.code}). Please try again.`;
-           } else if (error.code.startsWith('PGRST') && error.message.includes(' RLS ')) {
-             errorMessage = `Database access error. Check setup.`;
-           }
-      } else if (error instanceof Error) {
-          errorMessage = `Submission failed: ${error.message}`;
-      }
-
-      toast.error(errorMessage, { id: submissionToastId });
-
-    } finally {
-      setIsSubmittingWaitlist(false);
-    }
-  }, [waitlistEmail, isSubmittingWaitlist]); // Dependencies for useCallback
-
+  // --- Waitlist Submission Logic Removed ---
 
   // --- Rendering Logic ---
 
-  // ... (Keep existing renderSkeleton, renderPreviewArea, renderApiStatusAlert functions)
+  // ... (Keep existing renderSkeleton, renderPreviewArea functions)
   const renderSkeleton = () => (
     <div className="p-6 space-y-4 animate-pulse">
         <Skeleton className="h-8 w-3/4" />
@@ -227,8 +179,10 @@ export default function HeroPreview() {
   };
 
 
+  // --- renderApiStatusAlert: Remove isSubmittingWaitlist check ---
   const renderApiStatusAlert = () => {
-    if (isLoading || (homepagePosts.length > 0 && !fetchError) || isSubmittingWaitlist) return null;
+    // Removed isSubmittingWaitlist check
+    if (isLoading || (homepagePosts.length > 0 && !fetchError)) return null;
     if (apiCheckStatus === 'idle') return null;
     let variant: "default" | "destructive" | "success" = "default"; let Icon = Info; let title = "API Status";
     if (apiCheckStatus === 'loading') { Icon = Loader2; title = "Checking API..."; variant = "default"; }
@@ -242,9 +196,10 @@ export default function HeroPreview() {
   // --- Main Component Return ---
   return (
     <TooltipProvider delayDuration={100}>
+      {/* Toaster is still useful for other toasts in this component */}
       <Toaster position="bottom-center" />
       <div className="flex flex-col w-full space-y-6">
-        {/* Input Card (Remains first) */}
+        {/* Input Card */}
         <Card id="input-section">
           <CardHeader className="pb-4 pt-5 px-5">
             <h3 className="text-lg font-medium">Enter Site URL or Try Example</h3>
@@ -257,7 +212,8 @@ export default function HeroPreview() {
                 placeholder="e.g., https://your-site.com"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                disabled={isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist}
+                // Removed isSubmittingWaitlist check
+                disabled={isCheckingApi || isLoading || isMigrating}
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
@@ -267,7 +223,8 @@ export default function HeroPreview() {
                   variant="secondary"
                   size="sm"
                   onClick={() => handleExampleClick(site)}
-                  disabled={isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist}
+                   // Removed isSubmittingWaitlist check
+                  disabled={isCheckingApi || isLoading || isMigrating}
                 >
                   {(isCheckingApi || isLoading) && normalizeUrl(url) === normalizeUrl(site.url) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {site.name}
@@ -283,7 +240,8 @@ export default function HeroPreview() {
                     variant={'outline'}
                     size="default"
                     onClick={() => setActiveTheme(themeId)}
-                    disabled={isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist}
+                    // Removed isSubmittingWaitlist check
+                    disabled={isCheckingApi || isLoading || isMigrating}
                     className={cn("h-10 px-3", themeButtonStyles[themeId], activeTheme === themeId ? 'ring-2 ring-offset-2 ring-blue-600' : '')}
                   >
                     {THEMES[themeId]?.name || themeId}
@@ -293,7 +251,8 @@ export default function HeroPreview() {
             </div>
             <Button
               onClick={handleGenerateClick}
-              disabled={!url || isCheckingApi || isLoading || isMigrating || isSubmittingWaitlist}
+              // Removed isSubmittingWaitlist check
+              disabled={!url || isCheckingApi || isLoading || isMigrating}
               className="w-full"
               size="lg"
             >
@@ -303,7 +262,7 @@ export default function HeroPreview() {
           </CardContent>
         </Card>
 
-        {/* Preview Window (Remains second) */}
+        {/* Preview Window */}
          <div className="w-full">
               <div className="border rounded-lg overflow-hidden shadow-lg bg-gray-100 w-full">
                   <div className="bg-muted border-b px-4 py-2 flex items-center text-xs">
@@ -317,7 +276,7 @@ export default function HeroPreview() {
               </div>
           </div>
 
-        {/* Migration Card (Remains third, conditionally rendered) */}
+        {/* Migration Card */}
         {homepagePosts.length > 0 && !fetchError && resultsUrl && (
           <Card>
             <CardHeader className="pb-2">
@@ -337,7 +296,8 @@ export default function HeroPreview() {
               <Button
                 size="lg"
                 onClick={handleMigrate}
-                disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent || isSubmittingWaitlist}
+                // Removed isSubmittingWaitlist check
+                disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent}
                 className="w-full"
               >
                 {isMigrating ? (
@@ -353,46 +313,10 @@ export default function HeroPreview() {
           </Card>
         )}
 
-        {/* --- MOVED: Waitlist Signup Card (Now appears last) --- */}
-        <Card id="waitlist-section">
-          <CardHeader className="pb-3 pt-5 px-5">
-            <CardTitle className="text-lg">Join the Waitlist</CardTitle>
-            <CardDescription>Be the first to know about new features and releases.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 px-5 pb-5">
-            <div className="flex flex-col sm:flex-row gap-2 items-end">
-              <div className="flex-grow w-full">
-                 <Label htmlFor="waitlist-email" className="sr-only">Email Address</Label>
-                 <Input
-                    id="waitlist-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={waitlistEmail}
-                    onChange={(e) => setWaitlistEmail(e.target.value)}
-                    disabled={isSubmittingWaitlist || isLoading || isMigrating || isCheckingApi }
-                 />
-              </div>
-              <Button
-                onClick={handleWaitlistSubmit}
-                disabled={isSubmittingWaitlist || !waitlistEmail || isLoading || isMigrating || isCheckingApi}
-                className="w-full sm:w-auto"
-              >
-                {isSubmittingWaitlist ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Joining...</>
-                ) : (
-                  <><Mail className="mr-2 h-4 w-4" /> Join Waitlist</>
-                )}
-              </Button>
-            </div>
-             <p className="text-xs text-muted-foreground text-center pt-1">
-               We respect your privacy. No spam.
-             </p>
-          </CardContent>
-        </Card>
-        {/* --- End Waitlist Card --- */}
+        {/* --- Waitlist Signup Card REMOVED from here --- */}
 
 
-        {/* Modal Dialog (Remains at the end, doesn't affect flow) */}
+        {/* Modal Dialog */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
              <DialogContent className="sm:max-w-[80%] lg:max-w-[1000px] max-h-[90vh] flex flex-col p-0">
                  <DialogHeader className="flex-shrink-0 px-6 pt-4 pb-2 pr-16 border-b">
