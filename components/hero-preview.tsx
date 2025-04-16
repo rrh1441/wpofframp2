@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { THEMES, ThemeKey } from "@/lib/constants";
+// Ensure type imports match the API route export
 import type { HomepagePost, HomepagePreviewData } from "@/app/api/homepage-preview/route";
 import { cn } from "@/lib/utils";
 import { ModernLayout } from './themes/ModernLayout';
@@ -80,7 +81,7 @@ export default function HeroPreview() {
     // Hooks and Functions (Assume these are correct)
     useEffect(() => { const handler = setTimeout(() => { const normalizedInputUrl = url ? normalizeUrl(url) : ""; if ((normalizedInputUrl && resultsUrl && normalizedInputUrl !== resultsUrl) || (!url && resultsUrl)) { setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setApiCheckStatus('idle'); setApiCheckMessage(null); setDisplayedSiteName(null); } }, 300); return () => clearTimeout(handler); }, [url, resultsUrl]);
     const fetchHomepagePreview = useCallback(async (targetUrl: string, siteName?: string) => { setIsLoading(true); setFetchError(null); setMigrationError(null); setResultsUrl(targetUrl); setDisplayedSiteName(siteName || null);
-        try { const response = await fetch("/api/homepage-preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wpUrl: targetUrl }), }); if (!response.ok) { let errorMsg = `Failed (Status: ${response.status})`; try { const d = await response.json(); errorMsg = d.message || errorMsg; } catch (e) { try { const t = await response.text(); errorMsg += `: ${t.substring(0,100)}`;} catch(te){/*i*/} } if (response.status === 504) errorMsg = `Server timeout (504).`; throw new Error(errorMsg); }
+        try { const response = await fetch("/api/homepage-preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wpUrl: targetUrl }), }); if (!response.ok) { let errorMsg = `Failed (Status: ${response.status})`; try { const d = await response.json(); errorMsg = d.message || errorMsg; } catch (e) { try { const t = await response.text(); errorMsg += `: ${t.substring(0,100)}`;} catch(te){/*ignore*/} } if (response.status === 504) errorMsg = `Server timeout (504).`; throw new Error(errorMsg); }
             const data: HomepagePreviewData = await response.json();
             if (!data.homepagePosts || data.homepagePosts.length === 0) { throw new Error("No posts found."); }
             setHomepagePosts(data.homepagePosts);
@@ -102,28 +103,104 @@ export default function HeroPreview() {
     const handleGenerateClick = useCallback(async () => { if (!url) { toast.error("Please enter a site URL."); return; } if (isCheckingApi || isLoading || isMigrating) return; const targetUrl = normalizeUrl(url); if (!targetUrl) { toast.error("Invalid URL format."); return; } if (resultsUrl === targetUrl && homepagePosts.length > 0) { toast("Preview already generated.", {duration: 2000}); return; } setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null); const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl); } }, [url, isCheckingApi, isLoading, isMigrating, resultsUrl, homepagePosts.length, checkApi, fetchHomepagePreview]);
     const handleExampleClick = useCallback(async (site: { name: string, url: string }) => { if (isLoading || isMigrating || isCheckingApi) return; const targetUrl = normalizeUrl(site.url); setUrl(targetUrl); setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null); const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl, site.name); } }, [isLoading, isMigrating, isCheckingApi, checkApi, fetchHomepagePreview]);
     const handlePostCardClick = useCallback((postIndex: number) => { if (postIndex === 0 && homepagePosts[0]?.fullContent?.mdx) { const post = homepagePosts[0]; setModalPostContent({ title: post.title, mdx: post.fullContent.mdx, id: post.id, link: post.link }); setIsModalOpen(true); } else if (postIndex > 0) { toast.dismiss(); toast("Full preview only available for the most recent post.", { duration: 4000, position: 'bottom-center' }); } else { toast.error("Could not load post content for preview.", { duration: 3000 }); } }, [homepagePosts]);
-    const handleMigrate = async () => { const mostRecentPost = homepagePosts[0]; if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent) { setMigrationError("Cannot migrate..."); return; } setIsMigrating(true); setMigrationError(null); setFetchError(null); try { const payload = { wpUrl: resultsUrl, theme: activeTheme, homepagePostsData: homepagePosts.map((p, i) => ({ ...p, fullContent: i === 0 ? p.fullContent : undefined })) }; const response = await fetch("/api/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) { let msg = `Migration failed! (Status: ${response.status})`; try{const d=await response.json(); msg=d.error||msg;}catch(e){} if(response.status===429) msg="Rate limit reached."; throw new Error(msg); } const contentType = response.headers.get('Content-Type'); if (!contentType || !contentType.includes('application/zip')) throw new Error('Server did not return ZIP.'); const blob = await response.blob(); const downloadUrl = window.URL.createObjectURL(blob); const link = document.createElement('a'); link.href = downloadUrl; const disposition = response.headers.get('Content-Disposition'); let filename = `${activeTheme}_homepage_site.zip`; if (disposition?.includes('filename=')) { const matches = /filename\*?=['"]?([^'";]+)['"]?/.exec(disposition); if (matches?.[1]) filename = decodeURIComponent(matches[1]); } link.setAttribute('download', filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(downloadUrl); } catch (error: any) { console.error("[Migrate V2] Failed:", error); setMigrationError(`${error.message || "Unknown migration error"}`); } finally { setIsMigrating(false); } };
+
+    // --- MODIFIED handleMigrate Function ---
+    const handleMigrate = async () => {
+        const mostRecentPost = homepagePosts[0];
+        // Frontend check for required data
+        if (!resultsUrl || !activeTheme || !mostRecentPost || !mostRecentPost.fullContent?.mdx) {
+            // Ensure mdx specifically is checked, matching backend's 400 check logic closer
+            setMigrationError("Cannot migrate: Missing required data or MDX content for the first post.");
+            return;
+        }
+        setIsMigrating(true);
+        setMigrationError(null);
+        setFetchError(null); // Clear other errors when starting migration
+        try {
+            // Construct the payload with the CORRECT key 'homepagePosts'
+            const payload = {
+                wpUrl: resultsUrl,
+                theme: activeTheme,
+                homepagePosts: homepagePosts.map((p, i) => ({ // Use 'homepagePosts' key
+                    ...p,
+                    // Only include fullContent for the first post to match backend expectation implicitly
+                    fullContent: i === 0 ? p.fullContent : undefined
+                }))
+            };
+
+            const response = await fetch("/api/migrate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            // Handle non-OK responses (including 400, 429, 500 etc.)
+            if (!response.ok) {
+                let msg = `Migration failed! (Status: ${response.status})`;
+                try {
+                    // Attempt to parse error message from backend JSON response
+                    const data = await response.json();
+                    msg = data.error || data.message || msg; // Use error/message field if available
+                } catch (e) {
+                    // Ignore JSON parsing error if response body is not valid JSON
+                    console.warn("Could not parse error response body as JSON.");
+                }
+                // Handle specific status codes if needed (like 429 already handled)
+                if (response.status === 429) msg = "Rate limit reached. Please try again later.";
+                throw new Error(msg); // Throw an error to be caught by the catch block
+            }
+
+            // Handle successful response (ZIP download)
+            const contentType = response.headers.get('Content-Type');
+            if (!contentType || !contentType.includes('application/zip')) {
+                // This case might happen if the server unexpectedly sends non-ZIP success response
+                throw new Error('Server did not return a ZIP file as expected.');
+            }
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+
+            // Extract filename from Content-Disposition header
+            const disposition = response.headers.get('Content-Disposition');
+            let filename = `${activeTheme}_homepage_site.zip`; // Default filename
+            if (disposition?.includes('filename=')) {
+                const matches = /filename\*?=['"]?([^'";]+)['"]?/.exec(disposition);
+                if (matches?.[1]) {
+                    filename = decodeURIComponent(matches[1]);
+                }
+            }
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+
+        } catch (error: any) {
+            // Catch errors from fetch call OR thrown from !response.ok block
+            console.error("[Migrate V2] Migration failed:", error);
+            setMigrationError(`${error.message || "Unknown migration error"}`); // Display error message in UI
+        } finally {
+            setIsMigrating(false);
+        }
+    };
+    // --- END MODIFIED handleMigrate Function ---
+
     const renderSkeleton = () => ( <div className="p-6 space-y-4 animate-pulse"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-4 w-1/2" /><div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start"><div className="lg:col-span-2 space-y-4"><Skeleton className="h-80 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-5/6" /></div><div className="space-y-6 lg:space-y-8"><div className="space-y-3"><Skeleton className="h-48 w-full" /><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-5/6" /></div><div className="space-y-3"><Skeleton className="h-48 w-full" /><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-5/6" /></div></div></div></div> );
     const renderPreviewArea = () => { const ActiveLayout = themeLayoutMap[activeTheme]; const nameToPass = displayedSiteName || "Website Preview"; if (isCheckingApi || isLoading) { return renderSkeleton(); } if (apiCheckStatus === 'error' && !isCheckingApi) { return renderSkeleton(); } if (fetchError && !isLoading) { return (<div className="p-4 md:p-6"><Alert variant="destructive"><AlertCircle className="h-4 w-4" /> <AlertTitle>Preview Error</AlertTitle><AlertDescription>{fetchError}</AlertDescription></Alert></div>); } if ((resultsUrl && homepagePosts.length === 0 && !isLoading && !fetchError) || isLoading) { return renderSkeleton(); } if (!resultsUrl && url && !fetchError) { return (<div className="text-center py-10 text-muted-foreground">Click "Generate Previews".</div>); } if (!resultsUrl && !url) { return (<div className="text-center py-10 text-muted-foreground">Enter site URL & click "Generate Previews".</div>); } if (ActiveLayout && homepagePosts.length > 0) { return <ActiveLayout posts={homepagePosts} onClickPost={handlePostCardClick} websiteName={nameToPass} />; } if (!ActiveLayout) return (<div className="p-4 text-red-600">Error: Theme layout component missing.</div>); return renderSkeleton(); };
     const renderApiStatusAlert = () => { if (isLoading || (homepagePosts.length > 0 && !fetchError)) return null; if (apiCheckStatus === 'idle') return null; let variant: "default" | "destructive" | "success" = "default"; let Icon = Info; let title = "API Status"; if (apiCheckStatus === 'loading') { Icon = Loader2; title = "Checking API..."; variant = "default"; } else if (apiCheckStatus === 'success') { Icon = CheckCircle2; title = "API Check OK"; variant = "success"; } else if (apiCheckStatus === 'error') { Icon = AlertTriangle; title = "API Check Failed"; variant = "destructive"; } if (apiCheckStatus === 'success' && fetchError) return null; return ( <Alert variant={variant} className="mt-4"> <Icon className={cn("h-4 w-4 mt-1 shrink-0", apiCheckStatus==='loading' && 'animate-spin')} /> <div className="ml-2"> <AlertTitle>{title}</AlertTitle> {apiCheckMessage && <AlertDescription className="whitespace-pre-wrap text-sm">{apiCheckMessage}</AlertDescription>} </div> </Alert> ); };
 
-    // --- ADDED: Input KeyDown Handler ---
     const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        // Check if the pressed key is Enter
         if (event.key === 'Enter') {
-            event.preventDefault(); // Prevent any default form submission behavior
-
-            // Check if the generate button would be enabled before triggering
+            event.preventDefault();
             if (!url || isCheckingApi || isLoading || isMigrating) {
-                 if (!url) toast.error("Please enter a site URL."); // Give feedback if URL is missing
-                return; // Do nothing if generate shouldn't run
+                 if (!url) toast.error("Please enter a site URL.");
+                return;
             }
-
-            // Trigger the generate preview action
             handleGenerateClick();
         }
     };
-    // --- END ADDED HANDLER ---
 
 
     // Component Return JSX
@@ -135,7 +212,6 @@ export default function HeroPreview() {
                 <Card id="input-section">
                     <CardHeader className="pb-4 pt-5 px-5"><h3 className="text-lg font-medium">Enter Site URL or Try Example</h3></CardHeader>
                     <CardContent className="space-y-4 px-5 pb-5">
-                        {/* --- MODIFIED: Added onKeyDown to Input --- */}
                         <div>
                             <Input
                                 id="wordpress-url"
@@ -143,11 +219,10 @@ export default function HeroPreview() {
                                 placeholder="e.g., https://your-site.com"
                                 value={url}
                                 onChange={(e) => setUrl(e.target.value)}
-                                onKeyDown={handleInputKeyDown} // Attach the handler here
+                                onKeyDown={handleInputKeyDown}
                                 disabled={isCheckingApi || isLoading || isMigrating}
                             />
                         </div>
-                        {/* --- END MODIFICATION --- */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">{exampleSites.map((site) => (<Button key={site.name} variant="secondary" size="sm" onClick={() => handleExampleClick(site)} disabled={isCheckingApi || isLoading || isMigrating}>{(isCheckingApi || isLoading) && normalizeUrl(url) === normalizeUrl(site.url) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{site.name}</Button>))}</div>
                         <div className="pt-2"><Label className="pb-2 block text-sm font-medium">Select Preview Theme</Label><div className="grid grid-cols-1 sm:grid-cols-3 gap-2">{themeKeys.map((themeId) => (<Button key={`select-${themeId}`} variant={'outline'} size="default" onClick={() => setActiveTheme(themeId)} disabled={isCheckingApi || isLoading || isMigrating} className={cn("h-10 px-3", themeButtonStyles[themeId], activeTheme === themeId ? 'ring-2 ring-offset-2 ring-blue-600' : '')}>{THEMES[themeId]?.name || themeId}</Button>))}</div></div>
                         <Button onClick={handleGenerateClick} disabled={!url || isCheckingApi || isLoading || isMigrating} className="w-full" size="lg">{isCheckingApi ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Checking...</>) : isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading...(est. 1 minute)</>) : ("Generate Previews")}</Button>
@@ -169,23 +244,23 @@ export default function HeroPreview() {
                     </div>
                 </div>
 
-                 {/* --- Waitlist Form Instance REMOVED FROM HERE --- */}
-
+                 {/* Waitlist Form Instance - dynamically imported below */}
 
                 {/* Migration Card */}
                 {homepagePosts.length > 0 && !fetchError && resultsUrl && (
                 <Card>
                     <CardHeader className="pb-2"><h3 className="text-lg font-medium">Migrate & Download</h3><p className="text-sm text-muted-foreground">Generates Next.js project ({THEMES[activeTheme]?.name || activeTheme} theme).</p></CardHeader>
                     <CardContent>
+                    {/* Display migration-specific errors here */}
                     {migrationError && (<Alert variant="destructive" className="mb-4"><AlertCircle className="h-4 w-4" /><AlertTitle>Migration Error</AlertTitle><AlertDescription>{migrationError}</AlertDescription></Alert>)}
-                    <Button size="lg" onClick={handleMigrate} disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent} className="w-full">{isMigrating ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Migrating...</>) : (<><Download className="mr-2 h-4 w-4" />Migrate & Download ZIP</>)}</Button>
+                    <Button size="lg" onClick={handleMigrate} disabled={isMigrating || isLoading || isCheckingApi || !homepagePosts[0]?.fullContent?.mdx} className="w-full">{isMigrating ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Migrating...</>) : (<><Download className="mr-2 h-4 w-4" />Migrate & Download ZIP</>)}</Button>
                     <p className="text-xs text-muted-foreground mt-2 text-center">Free migration limited per session.</p>
                     </CardContent>
                 </Card>
                 )}
                 {/* --- END Migration Card --- */}
 
-                {/* --- MOVED: Dynam ically Imported Waitlist Form is now here --- */}
+                {/* Dynamically Imported Waitlist Form */}
                 <DynamicHeroWaitlistWrapper />
 
                 {/* Modal Dialog */}
