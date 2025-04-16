@@ -25,47 +25,18 @@ import {
 } from "lucide-react";
 import HeroPreview from "@/components/hero-preview";
 import { THEMES } from "@/lib/constants";
-import EnhancedStepGuide from "@/components/enhanced-step-guide"; // Import the guide component
+import EnhancedStepGuide from "@/components/enhanced-step-guide";
 
 const themeKeys = ["modern", "matrix", "ghibli"];
 
 const whoIsItForData = [
-  {
-    icon: BarChartBig,
-    title: "Content Creators & Bloggers",
-    description:
-      "Perfect for migrating blogs, personal sites, or online publications with lots of articles seeking speed and simplicity.",
-  },
-  {
-    icon: BriefcaseBusiness,
-    title: "Entrepreneurs",
-    description:
-      "Get a professional, fast, and secure web presence for lead generation or branding without WordPress maintenance.",
-  },
-  {
-    icon: Palette,
-    title: "Portfolio Owners",
-    description:
-      "Visually showcase your design, photography, or artwork on a fast-loading site without WordPress theme limitations.",
-  },
-  {
-    icon: Rocket,
-    title: "Performance Seekers",
-    description:
-      "Ideal if your WordPress site feels slow and you crave the instant loads of a static site generator like Next.js.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Security Conscious Users",
-    description:
-      "Eliminate worries about plugin vulnerabilities and constant WordPress security patches with inherently secure static sites.",
-  },
-  {
-    icon: Code2,
-    title: "Developers & Agencies",
-    description:
-      "Quickly convert client WordPress sites to a modern, maintainable stack (Next.js, Tailwind CSS) without manual migration.",
-  },
+    // ... (data is the same)
+    { icon: BarChartBig, title: "Content Creators & Bloggers", description: "Perfect for migrating blogs, personal sites, or online publications with lots of articles seeking speed and simplicity.", },
+    { icon: BriefcaseBusiness, title: "Entrepreneurs", description: "Get a professional, fast, and secure web presence for lead generation or branding without WordPress maintenance.", },
+    { icon: Palette, title: "Portfolio Owners", description: "Visually showcase your design, photography, or artwork on a fast-loading site without WordPress theme limitations.", },
+    { icon: Rocket, title: "Performance Seekers", description: "Ideal if your WordPress site feels slow and you crave the instant loads of a static site generator like Next.js.", },
+    { icon: ShieldCheck, title: "Security Conscious Users", description: "Eliminate worries about plugin vulnerabilities and constant WordPress security patches with inherently secure static sites.", },
+    { icon: Code2, title: "Developers & Agencies", description: "Quickly convert client WordPress sites to a modern, maintainable stack (Next.js, Tailwind CSS) without manual migration.", },
 ];
 
 
@@ -87,13 +58,13 @@ export default function Home() {
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
-          {/* --- Desktop Nav Updated --- */}
+          {/* --- Desktop Nav Updated (Removed asChild from "About") --- */}
           <nav className="hidden sm:flex items-center gap-6">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="#details">About</Link> {/* Renamed */}
+            <Button variant="ghost" size="sm"> {/* Removed asChild */}
+              <Link href="#details">About</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="#how-to-guide">How To</Link> {/* Added */}
+              <Link href="#how-to-guide">How To</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link href="#who-is-it-for">Who It's For</Link>
@@ -104,14 +75,14 @@ export default function Home() {
           </nav>
           {/* --- End Desktop Nav --- */}
         </div>
-        {/* --- Mobile Nav Updated --- */}
+        {/* --- Mobile Nav Updated (Removed asChild from "About") --- */}
         {mobileMenuOpen && (
           <div className="sm:hidden px-4 pt-2 pb-4 space-y-2 border-b">
-            <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-              <Link href="#details" onClick={() => setMobileMenuOpen(false)}>About</Link> {/* Renamed */}
+            <Button variant="ghost" size="sm" className="w-full justify-start"> {/* Removed asChild */}
+              <Link href="#details" onClick={() => setMobileMenuOpen(false)}>About</Link>
             </Button>
             <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-              <Link href="#how-to-guide" onClick={() => setMobileMenuOpen(false)}>How To</Link> {/* Added */}
+              <Link href="#how-to-guide" onClick={() => setMobileMenuOpen(false)}>How To</Link>
             </Button>
             <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
               <Link href="#who-is-it-for" onClick={() => setMobileMenuOpen(false)}>Who It's For</Link>
@@ -127,7 +98,8 @@ export default function Home() {
       <main className="flex-1">
         {/* Section 1: Hero Preview */}
         <section id="top" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+         {/* ... content ... */}
+         <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-10">
               <div className="flex flex-col justify-center space-y-6 text-center max-w-4xl mx-auto">
                 <div className="space-y-4">
@@ -144,94 +116,45 @@ export default function Home() {
         </section>
 
         {/* Section 2: Step-by-Step Guide */}
-        {/* --- Added id="how-to-guide" --- */}
         <section id="how-to-guide" className="w-full pt-12 pb-12 md:pb-24 lg:pb-32 bg-background border-t">
-          <div className="container px-4 md:px-6">
+          {/* ... content ... */}
+           <div className="container px-4 md:px-6">
              <div className="flex flex-col items-center space-y-8">
-               {/* Optional Heading */}
-               {/* <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center">
-                 From WordPress to Vercel: Step-by-Step
-               </h2> */}
                <EnhancedStepGuide />
              </div>
           </div>
         </section>
-        {/* --- End Step Guide Section --- */}
 
         {/* Section 3: "About" / Details */}
-        {/* --- This section now corresponds to the "About" link --- */}
         <section id="details" className="w-full py-12 md:py-24 lg:py-32 bg-muted border-t">
+         {/* ... content ... */}
           <div className="container px-4 md:px-6 max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 xl:gap-20">
               <div className="flex flex-col space-y-8">
                 <div className="space-y-4">
-                  {/* --- You might want to update this H2 text to match "About" --- */}
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">How WP Offramp Works</h2>
                   <p className="text-muted-foreground md:text-lg">Three simple steps to transform your WordPress site</p>
                 </div>
                 <div className="grid gap-6">
                   {[...Array(3)].map((_, idx) => {
-                    const steps = [
-                      {
-                        title: "1. Enter Your URL", // Changed title slightly
-                        description: "Paste your WordPress site URL or choose an example.",
-                      },
-                      {
-                        title: "2. Preview & Download", // Changed title slightly
-                        description: "Instantly preview themes and download your Next.js ZIP.",
-                      },
-                      {
-                        title: "3. Deploy Anywhere", // Changed title slightly
-                        description: "Push to GitHub and deploy seamlessly on Vercel or elsewhere.",
-                      },
-                    ];
-                    return (
-                      <Card key={idx} className="h-full flex flex-col">
-                        <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                          {/* Removed number div, incorporated into title */}
-                          <CardTitle className="text-xl">{steps[idx].title}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                          <p className="text-sm text-muted-foreground">{steps[idx].description}</p>
-                        </CardContent>
-                      </Card>
-                    );
+                     const steps = [ { title: "1. Enter Your URL", description: "Paste your WordPress site URL or choose an example.", }, { title: "2. Preview & Download", description: "Instantly preview themes and download your Next.js ZIP.", }, { title: "3. Deploy Anywhere", description: "Push to GitHub and deploy seamlessly on Vercel or elsewhere.", }, ];
+                    return ( <Card key={idx} className="h-full flex flex-col"> <CardHeader className="flex flex-row items-center gap-4 pb-2"> <CardTitle className="text-xl">{steps[idx].title}</CardTitle> </CardHeader> <CardContent className="flex-grow"> <p className="text-sm text-muted-foreground">{steps[idx].description}</p> </CardContent> </Card> );
                   })}
                 </div>
               </div>
               <div className="flex flex-col space-y-8">
-                {/* --- You might want to update this H2 text to match "About" --- */}
                 <div className="space-y-4">
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Key Features</h2>
                   <p className="text-muted-foreground md:text-lg">Modern tech, zero hassle.</p>
                 </div>
                 <div className="grid grid-cols-1 gap-6">
-                   {/* Simplified this part, maybe list features instead of themes? */}
-                   {/* Example Feature List (replace theme mapping) */}
-                   {[
-                     { icon: Rocket, title: "Blazing Fast Speed", description: "Leverage Next.js static generation for instant page loads."},
-                     { icon: Code2, title: "Modern Stack", description: "Built with Next.js, React, TypeScript, and Tailwind CSS."},
-                     { icon: ShieldCheck, title: "Enhanced Security", description: "Reduce attack surface compared to traditional WordPress setups."},
-                     { icon: Sparkles, title: "Easy Deployment", description: "Deploy effortlessly via GitHub and Vercel."},
-                   ].map((feature, index) => (
-                      <Card key={index} className="h-full flex flex-col">
-                        <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                           <feature.icon className="h-6 w-6 text-primary shrink-0" aria-hidden="true" />
-                           <CardTitle className="text-xl">{feature.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                           <p className="text-sm text-muted-foreground">{feature.description}</p>
-                        </CardContent>
-                      </Card>
-                   ))}
+                   {[ { icon: Rocket, title: "Blazing Fast Speed", description: "Leverage Next.js static generation for instant page loads."}, { icon: Code2, title: "Modern Stack", description: "Built with Next.js, React, TypeScript, and Tailwind CSS."}, { icon: ShieldCheck, title: "Enhanced Security", description: "Reduce attack surface compared to traditional WordPress setups."}, { icon: Sparkles, title: "Easy Deployment", description: "Deploy effortlessly via GitHub and Vercel."}, ].map((feature, index) => ( <Card key={index} className="h-full flex flex-col"> <CardHeader className="flex flex-row items-center gap-4 pb-2"> <feature.icon className="h-6 w-6 text-primary shrink-0" aria-hidden="true" /> <CardTitle className="text-xl">{feature.title}</CardTitle> </CardHeader> <CardContent className="flex-grow"> <p className="text-sm text-muted-foreground">{feature.description}</p> </CardContent> </Card> ))}
                 </div>
               </div>
             </div>
             <div className="mt-16 flex justify-center">
               <Button size="lg" asChild>
-                <Link href="#top">
-                  Reimagine Your Site Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
+                <Link href="#top"> Reimagine Your Site Now <ArrowRight className="ml-2 h-5 w-5" /> </Link>
               </Button>
             </div>
           </div>
@@ -239,25 +162,14 @@ export default function Home() {
 
         {/* Section 4: Who Is It For */}
         <section id="who-is-it-for" className="w-full py-12 md:py-24 lg:py-32 border-t">
-           <div className="container px-4 md:px-6">
+         {/* ... content ... */}
+          <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-8 text-center">
               <div className="space-y-3">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">WP Offramp is Best For</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl pt-4">
-                {whoIsItForData.map((item, index) => (
-                  <Card key={index} className="text-left h-full flex flex-col">
-                    <CardHeader className="flex flex-row items-start gap-4 pb-3">
-                      <item.icon className="h-8 w-8 mt-1 text-primary shrink-0" aria-hidden="true" />
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-1">{item.title}</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <p className="text-muted-foreground">{item.description}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+                {whoIsItForData.map((item, index) => ( <Card key={index} className="text-left h-full flex flex-col"> <CardHeader className="flex flex-row items-start gap-4 pb-3"> <item.icon className="h-8 w-8 mt-1 text-primary shrink-0" aria-hidden="true" /> <div className="flex-1"> <CardTitle className="text-xl mb-1">{item.title}</CardTitle> </div> </CardHeader> <CardContent className="flex-grow"> <p className="text-muted-foreground">{item.description}</p> </CardContent> </Card> ))}
               </div>
             </div>
           </div>
@@ -266,15 +178,10 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full border-t py-6 md:py-0">
-         <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            © {currentYear} WP Offramp. All rights reserved.
-          </p>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Button variant="ghost" size="sm" asChild>
-              <a href="mailto:support@simpleappsgroup.com">Contact</a>
-            </Button>
-          </div>
+       {/* ... content ... */}
+        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left"> © {currentYear} WP Offramp. All rights reserved. </p>
+          <div className="flex items-center gap-2 sm:gap-4"> <Button variant="ghost" size="sm" asChild> <a href="mailto:support@simpleappsgroup.com">Contact</a> </Button> </div>
         </div>
       </footer>
     </div>
