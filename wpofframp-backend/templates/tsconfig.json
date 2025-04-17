@@ -1,0 +1,38 @@
+// wpofframp-backend/tsconfig.json
+{
+  "compilerOptions": {
+    /* Base Options */
+    "esModuleInterop": true, // Enables compatibility with CommonJS modules
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "target": "ES2020", // Target modern ECMAScript version compatible with Node 20+
+    "allowJs": true, // Allow JavaScript files to be compiled
+    "resolveJsonModule": true, // Allow importing JSON modules
+    "moduleDetection": "force", // Treat files as modules
+    "isolatedModules": true, // Ensure files can be safely transpiled individually
+
+    /* Strictness */
+    "strict": true, // Enable all strict type-checking options
+    "noUncheckedIndexedAccess": true, // Add safety for array/object accesses
+
+    /* If NOT transpiling with SWC/ESBuild */
+    "module": "CommonJS", // Output CommonJS modules suitable for Node.js
+    "outDir": "./dist", // Output compiled JavaScript to a 'dist' directory
+    "sourceMap": true, // Generate sourcemaps for debugging
+
+    /* If transpiling with SWC/ESBuild */
+    // "module": "ESNext",
+    // "moduleResolution": "NodeNext",
+
+    /* Project Structure */
+     "rootDir": ".", // Look for source files starting from the root
+     "baseUrl": ".", // Base directory for path resolution (used with paths)
+     "paths": {
+       "@/*": ["./*"] // Allows imports like '@/lib/buildZip'
+     }
+
+     /* Completeness */
+    // "forceConsistentCasingInFileNames": true, // Optional: Disallow inconsistently-cased references
+  },
+  "include": ["**/*.ts"], // Include all .ts files in the project directory and subdirectories
+  "exclude": ["node_modules", "dist"] // Exclude dependencies and the output directory
+}
