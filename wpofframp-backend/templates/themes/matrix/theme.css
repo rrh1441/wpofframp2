@@ -1,79 +1,36 @@
-/* templates/themes/matrix/theme.css */
-
 body {
-  background-color: #000000;
-  color: #00ff00; /* Bright green default text */
+  background-color: #000;
+  color: #00ff00;
   font-family: 'Courier New', Courier, monospace;
 }
 
-/* Basic scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #000;
-}
-::-webkit-scrollbar-thumb {
-  background: #0f0; /* Use a slightly darker green for thumb */
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #00ff00; /* Brighter green on hover */
+.matrix-homepage {
+  background-color: #000;
+  color: #00ff00;
+  font-family: 'Courier New', Courier, monospace;
 }
 
-/* --- Homepage Specific Styles --- */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #0f0; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #00ff00; }
 
-.matrix-command {
-  position: relative;
-  display: inline-block;
+.theme-card {
+  border: 1px solid #008f11;
+  background-color: rgba(0,0,0,0.5);
+  transition: background-color .2s ease-in-out;
 }
 
-.matrix-command::after,
-.matrix-cursor::after {
-  content: "_";
-  position: relative;
-  display: inline-block;
-  margin-left: 2px;
-  animation: matrix-blink 1s step-end infinite;
-}
+.matrix-card-active:hover { background-color: rgba(0,0,0,.8); }
 
-@keyframes matrix-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
+.matrix-card-index { color: #4ade80; font-weight: 700; }
+.matrix-card-title, .matrix-card-title-link { color: #00ff00; }
+.matrix-card-title-link:hover { color: #86efac; }
 
-.matrix-post-item {
-  /* Base styles applied in buildZip.ts */
-}
-
-.matrix-post-identifier {
-  color: #4ade80; /* Brighter green for #1, #2 etc */
-  font-weight: bold;
-}
-
-.matrix-post-title {
-  /* Base color applied in buildZip.ts */
-  display: inline; /* Ensure it stays inline with the identifier */
-}
-
-a .matrix-post-title:hover,
-.matrix-post-item:hover .matrix-post-title {
-  color: #86efac; /* Lighter green on hover */
-}
-
-.matrix-post-meta {
-  /* Base styles applied in buildZip.ts */
-}
-
-.matrix-post-excerpt {
-  /* Base styles applied in buildZip.ts */
-}
-
-.matrix-post-more span {
-  /* Base styles applied in buildZip.ts */
-}
-
-/* --- Prose Styles (for Single Post Page) --- */
+.matrix-card-meta { color: rgba(0,255,0,.7); }
+.matrix-card-filepath { color: #22ff22; }
+.matrix-card-readmore a { color: #00ff00; }
+.matrix-card-readmore a:hover { color: #a6ffb0; }
 
 .prose {
   --tw-prose-body: #86efac;
@@ -89,71 +46,39 @@ a .matrix-post-title:hover,
   --tw-prose-captions: #86efac;
   --tw-prose-code: #4ade80;
   --tw-prose-pre-code: #4ade80;
-  --tw-prose-pre-bg: #111111;
+  --tw-prose-pre-bg: #111;
   --tw-prose-th-borders: #166534;
   --tw-prose-td-borders: #166534;
+  line-height: 1.6;
 }
 
-/* Apply monospace font to all prose elements */
-.prose :where(*):not(:where([class~="not-prose"] *)) {
-  font-family: 'Courier New', Courier, monospace;
-}
+.prose :where(*):not(:where([class~="not-prose"] *)) { font-family: 'Courier New', Courier, monospace; }
+.prose :where(a):not(:where([class~="not-prose"] *)) { text-decoration: underline; }
+.prose :where(a):not(:where([class~="not-prose"] *)):hover { color: #16a34a; }
 
-/* Specific prose adjustments */
-.prose :where(a):not(:where([class~="not-prose"] *)) {
-  text-decoration: underline;
-}
-.prose :where(a):not(:where([class~="not-prose"] *)):hover {
-  color: #16a34a; /* Darker green on link hover */
-}
-
-.prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-  font-style: italic;
-  /* border-left-color is handled by --tw-prose-quote-borders */
-}
+.prose :where(blockquote):not(:where([class~="not-prose"] *)) { font-style: italic; }
 
 .prose :where(pre):not(:where([class~="not-prose"] *)) {
   border: 1px solid #166534;
-  border-radius: 0.25rem;
+  border-radius: .25rem;
   padding: 1rem;
 }
 
 .prose :where(code):not(:where([class~="not-prose"] *))::before,
-.prose :where(code):not(:where([class~="not-prose"] *))::after {
-  content: none; /* Remove default backticks added by prose */
-}
+.prose :where(code):not(:where([class~="not-prose"] *))::after { content: none; }
 
 .prose :where(code):not(pre code):not(:where([class~="not-prose"] *)) {
-  background-color: #111; /* Match pre background for inline */
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
-  font-weight: normal;
+  background-color: #111;
+  padding: .2rem .4rem;
+  border-radius: .25rem;
 }
 
 .prose :where(img):not(:where([class~="not-prose"] *)) {
-  border: 1px solid #166534; /* Dark green border */
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  border: 1px solid #166534;
+  margin: 1.5rem 0;
 }
 
-.prose {
-  line-height: 1.6;
-}
-.prose :where(p):not(:where([class~="not-prose"] *)) {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
-.prose :where(ul, ol):not(:where([class~="not-prose"] *)) {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
-.prose :where(li):not(:where([class~="not-prose"] *)) {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
-}
-
-/* Ensure headings have some space */
-.prose :where(h1, h2, h3, h4, h5, h6):not(:where([class~="not-prose"] *)) {
-  margin-top: 1.5em;
-  margin-bottom: 0.75em;
-}
+.prose :where(p):not(:where([class~="not-prose"] *)) { margin: 1rem 0; }
+.prose :where(ul,ol):not(:where([class~="not-prose"] *)) { margin: 1rem 0; }
+.prose :where(li):not(:where([class~="not-prose"] *)) { margin: .25rem 0; }
+.prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) { margin: 1.5em 0 .75em; }

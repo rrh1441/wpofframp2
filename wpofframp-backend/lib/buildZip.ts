@@ -24,10 +24,8 @@ interface BuildZipArgs {
 
 const generateSlug = (title: string, id: number): string => {
   return (
-    title
-      ?.replace(/[^a-z0-9]+/gi, '-')
-      .toLowerCase()
-      .substring(0, 50) || `post-${id}`
+    title?.replace(/[^a-z0-9]+/gi, '-').toLowerCase().substring(0, 50) ||
+    `post-${id}`
   )
 }
 
@@ -56,56 +54,34 @@ export async function buildZip({
     converter.on('finish', () => resolve(Buffer.concat(outputBuffers)))
 
     const archive = archiver('zip', { zlib: { level: 9 } })
-    archive.on('warning', (err) => {
-      console.warn('Archiver warning:', err)
-    })
-    archive.on('error', (err) => {
-      console.error('Archiver error:', err)
-      reject(new Error(`Failed to create ZIP archive: ${err.message}`))
-    })
+    archive.on('warning', (err) => console.warn('Archiver warning:', err))
+    archive.on('error', (err) =>
+      reject(new Error(`Failed to create ZIP archive: ${err.message}`)),
+    )
     archive.pipe(converter)
 
-    const addTemplateFile = async (sourcePath: string, archivePath: string) => {
-      const fullSourcePath = path.join(templateDir, sourcePath)
+    const addTemplateFile = async (src: string, dest: string) => {
+      const fullSrc = path.join(templateDir, src)
       try {
-        await fs.access(fullSourcePath)
-        archive.file(fullSourcePath, { name: archivePath })
-        console.log(`Added ${archivePath} from template: ${sourcePath}`)
+        await fs.access(fullSrc)
+        archive.file(fullSrc, { name: dest })
       } catch (err: any) {
         if (err.code === 'ENOENT') {
-          console.error(
-            `❌ CRITICAL ERROR: Template file not found: ${fullSourcePath}`
-          )
-          const criticalFiles = [
+          const critical = [
             'components/Layout.tsx',
             'app/layout.tsx',
             'app/globals.css',
             'package.json',
           ]
-          if (criticalFiles.includes(sourcePath)) {
+          if (critical.includes(src)) {
             reject(
-              new Error(
-                `Missing critical template file: ${sourcePath}. Build cannot proceed.`
-              )
-            )
-          } else {
-            console.warn(
-              `Non-critical template file not found, skipping: ${fullSourcePath}`
+              new Error(`Missing critical template file: ${src}. Aborting.`),
             )
           }
-        } else {
-          console.error(`Error accessing template file ${fullSourcePath}:`, err)
-          reject(
-            new Error(
-              `Error accessing template file: ${sourcePath}. Error: ${err.message}`
-            )
-          )
-        }
+        } else reject(err)
       }
     }
 
-    console.log(`Generating app/page.tsx for theme: ${theme}...`)
-    let homepageContent = ''
     const postsDataString = JSON.stringify(homepagePosts, null, 2)
 
     const commonImports = `
@@ -127,16 +103,17 @@ const stripHtml = (html: string): string => {
 const formatDateDistance = (isoDate: string): string => {
   try {
     return formatDistanceToNow(new Date(isoDate), { addSuffix: true });
-  } catch (e) {
-    console.warn(\`Error formatting date: \${isoDate}\`, e);
+  } catch {
     return isoDate;
   }
 };
 `
 
+    let homepageContent = ''
+
     switch (theme) {
       case 'matrix':
-        homepageContent = `// app/page.tsx (Generated for Matrix Theme)
+        homepageContent = `// app/page.tsx (Matrix)
 ${commonImports}
 
 export default function HomePage() {
@@ -147,145 +124,173 @@ export default function HomePage() {
   return (
     <main className="matrix-homepage min-h-screen bg-black text-green-400 font-mono p-4 md:p-8">
       <div className="container mx-auto py-8">
-        <div className="matrix-prompt flex items-center mb-6">
+        <div className="flex items-center mb-6">
           <div className="mr-2 text-green-400">{promptString}</div>
           <div className="text-green-300">ls -la /posts</div>
         </div>
-        <div className="matrix-post-list grid gap-0">
-          {postsData.length > 0 ? (
-            postsData.map((post, index) => {
-              const isLinkActive = index === 0;
-              const slug = generateSlug(post.title, post.id);
-              const postLink = isLinkActive ? \`/posts/\${slug}\` : '#';
-              const formattedDate = formatDateDistance(post.date);
-              const cleanExcerpt = stripHtml(post.excerpt);
+        <div className="grid gap-0">
+          {postsData.map((post, index) => {
+            const slug = generateSlug(post.title, post.id);
+            const linkActive = index === 0;
+            const postLink = linkActive ? \`/posts/\${slug}\` : '#';
+            const dateFmt = formatDateDistance(post.date);
+            const excerpt = stripHtml(post.excerpt);
 
-              return (
-                <div key={post.id} className={\`theme-card matrix-card border border-green-700 bg-black/50 p-4 rounded mb-4 \${isLinkActive ? 'matrix-card-active hover:bg-black/80 transition-colors cursor-pointer' : 'matrix-card-inactive opacity-70 cursor-default'}\`}>
-                  <div className="matrix-card-filepath text-xs mb-1 overflow-hidden whitespace-nowrap text-ellipsis">
-                    <span className="text-green-300">file://</span>
-                    <span className="text-green-500">{slug}.mdx</span>
-                  </div>
-                  <div className="text-lg font-bold mb-2">
-                     <span className="matrix-card-index text-[#4ade80] mr-2">#{index + 1}</span>
-                      {isLinkActive ? (
-                        <Link href={postLink} className="matrix-card-title-link text-green-400 hover:text-green-200 transition-colors">
-                           {post.title}
-                        </Link>
-                      ) : (
-                         <span className="matrix-card-title text-green-400">{post.title}</span>
-                      )}
-                  </div>
-                  <div className="matrix-card-meta text-sm text-green-400/80">
-                    <span className="mr-4">@{post.authorName || 'unknown'}</span>
-                    <span className="opacity-70">{formattedDate}</span>
-                  </div>
-                  <p className="matrix-card-excerpt mt-2 text-sm text-green-300/90 line-clamp-2">{cleanExcerpt}</p>
-                   {isLinkActive && (
-                     <div className="matrix-card-readmore mt-3 text-xs">
-                       <Link href={postLink} className="text-green-400 hover:text-green-300 border-b border-green-700 hover:border-green-400 transition-colors">
-                         cat {slug}.mdx | more
-                       </Link>
-                     </div>
-                   )}
+            return (
+              <div
+                key={post.id}
+                className={\`theme-card matrix-card border border-green-700 bg-black/50 p-4 rounded mb-4 \${linkActive ? 'matrix-card-active hover:bg-black/80 cursor-pointer' : 'opacity-70 cursor-default'}\`}
+              >
+                <div className="text-xs mb-1 overflow-hidden whitespace-nowrap text-ellipsis">
+                  <span className="text-green-300">file://</span>
+                  <span className="text-green-500">{slug}.mdx</span>
                 </div>
-              );
-            })
-          ) : (
-            <p>No posts found.</p>
-          )}
+                <div className="text-lg font-bold mb-2">
+                  <span className="text-[#4ade80] mr-2">#{index + 1}</span>
+                  {linkActive ? (
+                    <Link href={postLink} className="hover:text-green-200">
+                      {post.title}
+                    </Link>
+                  ) : (
+                    <span>{post.title}</span>
+                  )}
+                </div>
+                <div className="text-sm text-green-400/80">
+                  <span className="mr-4">@{post.authorName || 'unknown'}</span>
+                  <span className="opacity-70">{dateFmt}</span>
+                </div>
+                <p className="mt-2 text-sm text-green-300/90 line-clamp-2">
+                  {excerpt}
+                </p>
+                {linkActive && (
+                  <div className="mt-3 text-xs">
+                    <Link
+                      href={postLink}
+                      className="text-green-400 hover:text-green-300 border-b border-green-700 hover:border-green-400"
+                    >
+                      cat {slug}.mdx | more
+                    </Link>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-        <div className="matrix-prompt mt-8 flex items-center">
+        <div className="mt-8 flex items-center">
           <div className="mr-2 text-green-400">{promptString}</div>
           <div className="text-green-300">_</div>
         </div>
       </div>
     </main>
   );
-}`
+}
+`
         break
 
       case 'ghibli':
       case 'modern':
       default:
-        homepageContent = `// app/page.tsx (Generated for ${theme} Theme)
+        homepageContent = `// app/page.tsx (${theme})
 ${commonImports}
 
 export default function HomePage() {
-  const themeClass = '${theme}-homepage'; // Add theme class
+  const themeClass = '${theme}-homepage';
+
+  if (!postsData.length) {
+    return (
+      <main className={\`container mx-auto p-4 md:p-8 \${themeClass}\`}>
+        <p className="text-center text-muted-foreground">No posts found.</p>
+      </main>
+    );
+  }
+
+  const [featured, ...rest] = postsData;
+
+  const fSlug = generateSlug(featured.title, featured.id);
+  const fLink = \`/posts/\${fSlug}\`;
+  const fDate = formatDateDistance(featured.date);
+  const fExcerpt = stripHtml(featured.excerpt);
 
   return (
-    <main className={\`container mx-auto p-4 md:p-8 \${themeClass}\`}>
-      <h1 className="theme-page-title text-3xl font-bold mb-8 border-b pb-2">Latest Posts</h1>
-      <div className="theme-post-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-        {postsData.length > 0 ? (
-          postsData.map((post, index) => {
-            const isLinkActive = index === 0;
+    <main className={\`container mx-auto p-4 md:p-8 space-y-12 \${themeClass}\`}>
+      <Link href={fLink} className="block">
+        <article className={\`\${theme}-featured-card relative rounded-lg overflow-hidden aspect-video cursor-pointer\`}>
+          {featured.featuredMediaUrl && (
+            <Image
+              src={featured.featuredMediaUrl}
+              alt={featured.title || 'Featured image'}
+              fill
+              priority
+              style={{ objectFit: 'cover' }}
+              sizes="100vw"
+            />
+          )}
+          <div className="featured-post-gradient absolute inset-0" />
+          <div className="absolute bottom-0 w-full p-6 md:p-8 text-white drop-shadow-lg">
+            <h2 className={\`\${theme}-featured-title text-3xl md:text-4xl font-bold mb-2\`}>
+              {featured.title}
+            </h2>
+            <p className="hidden sm:block text-sm opacity-90 line-clamp-2">
+              {fExcerpt}
+            </p>
+            <p className="mt-2 text-xs opacity-70">
+              By {featured.authorName || 'Unknown'} • {fDate}
+            </p>
+          </div>
+        </article>
+      </Link>
+
+      <section>
+        <h3 className="theme-section-title text-2xl font-semibold mb-6">
+          More Stories
+        </h3>
+        <div className="theme-post-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {rest.map((post) => {
             const slug = generateSlug(post.title, post.id);
-            const postLink = isLinkActive ? \`/posts/\${slug}\` : '#';
-            const formattedDate = formatDateDistance(post.date);
-            const cleanExcerpt = stripHtml(post.excerpt);
+            const postLink = \`/posts/\${slug}\`;
+            const d = formatDateDistance(post.date);
+            const ex = stripHtml(post.excerpt);
 
-            const cardContent = (
-              <div className={\`theme-card ${theme}-card border rounded-lg overflow-hidden shadow-md flex flex-col h-full bg-card text-card-foreground \${isLinkActive ? 'theme-card-active hover:shadow-lg transition-shadow cursor-pointer' : 'theme-card-inactive opacity-80 cursor-default'}\`}>
-                {post.featuredMediaUrl && (
-                  <div className="theme-card-image-wrapper relative aspect-video overflow-hidden bg-muted">
-                    <Image
-                       src={post.featuredMediaUrl}
-                       alt={post.title || 'Featured image'}
-                       fill
-                       style={{ objectFit: 'cover' }}
-                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                       priority={index < 3}
-                    />
+            return (
+              <Link key={post.id} href={postLink} className="block h-full">
+                <div className={\`theme-card \${theme}-card border rounded-lg overflow-hidden shadow-md flex flex-col h-full bg-card text-card-foreground theme-card-active hover:shadow-lg transition-shadow\`}>
+                  {post.featuredMediaUrl && (
+                    <div className="relative aspect-video bg-muted overflow-hidden">
+                      <Image
+                        src={post.featuredMediaUrl}
+                        alt={post.title || 'Featured image'}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
+                      />
+                    </div>
+                  )}
+                  <div className="p-4 flex flex-col flex-grow">
+                    <h4 className="theme-card-title text-lg font-semibold mb-2 line-clamp-2 leading-tight">
+                      {post.title}
+                    </h4>
+                    <p className="theme-card-excerpt text-sm text-muted-foreground mb-3 line-clamp-3 flex-grow">
+                      {ex}
+                    </p>
+                    <div className="theme-card-meta text-xs text-muted-foreground mt-auto pt-2 border-t">
+                      <span>By {post.authorName || 'Unknown'}</span> • <span>{d}</span>
+                    </div>
                   </div>
-                )}
-                <div className="theme-card-content p-4 flex flex-col flex-grow">
-                  <h2 className="theme-card-title text-xl font-semibold mb-2 line-clamp-2 leading-tight">
-                   {post.title}
-                  </h2>
-                  <p className="theme-card-excerpt text-sm text-muted-foreground mb-3 line-clamp-3 flex-grow">
-                    {cleanExcerpt}
-                  </p>
-                  <div className="theme-card-meta text-xs text-muted-foreground mt-auto pt-2 border-t">
-                    <span>By {post.authorName || 'Unknown'}</span> | <span>{formattedDate}</span>
-                  </div>
-                   {isLinkActive && (
-                     <div className="theme-card-readmore mt-2 text-sm font-medium text-primary hover:underline">
-                         Read More...
-                     </div>
-                   )}
                 </div>
-              </div>
+              </Link>
             );
-
-            return isLinkActive ? (
-               <Link key={post.id} href={postLink} className="block h-full">
-                 {cardContent}
-               </Link>
-            ) : (
-               <div key={post.id} className="h-full">
-                 {cardContent}
-               </div>
-            );
-          })
-        ) : (
-          <p className="col-span-full text-center text-muted-foreground">No posts found.</p>
-        )}
-      </div>
+          })}
+        </div>
+      </section>
     </main>
   );
-}`
+}
+`
         break
     }
-    archive.append(Buffer.from(homepageContent, 'utf8'), {
-      name: 'app/page.tsx',
-    })
-    console.log(`Added generated app/page.tsx for theme ${theme}.`)
 
-    console.log(
-      `Generating single post page at app/posts/${mostRecentPostSlug}/page.tsx...`
-    )
+    archive.append(Buffer.from(homepageContent, 'utf8'), { name: 'app/page.tsx' })
+
     const postPageContent = `// app/posts/${mostRecentPostSlug}/page.tsx
 import { compileMDX } from 'next-mdx-remote/rsc';
 import Layout from '@/components/Layout';
@@ -293,114 +298,69 @@ import Layout from '@/components/Layout';
 const components = {};
 
 export async function generateStaticParams() {
- return [{ slug: '${mostRecentPostSlug}' }];
+  return [{ slug: '${mostRecentPostSlug}' }];
 }
 
 export default async function PostPage({ params }: { params: { slug: string } }) {
- if (params.slug !== '${mostRecentPostSlug}') {
-  return <div>Error: Post not found for slug '{params.slug}'.</div>;
- }
+  if (params.slug !== '${mostRecentPostSlug}') {
+    return <div>Error: Post not found for slug '{params.slug}'.</div>;
+  }
 
- const mdxSource = \`${mostRecentPostMdx.replace(/`/g, '\\`')}\`;
+  const mdxSource = \`${mostRecentPostMdx.replace(/`/g, '\\`')}\`;
 
- try {
-  const { content, frontmatter } = await compileMDX<{
-   title: string; date: string; author?: string; featuredMedia?: string; featuredImage?: string;
-  }>({
-   source: mdxSource,
-   components,
-   options: { parseFrontmatter: true },
-  });
-  return (<Layout frontmatter={frontmatter}>{content}</Layout>);
- } catch (error: any) {
-  console.error('Error compiling MDX for post:', params.slug, error);
-  return (<div><h1>Error Compiling Post</h1><pre>Slug: {params.slug}</pre><pre>Error: {error.message}</pre></div>);
- }
+  try {
+    const { content, frontmatter } = await compileMDX<{
+      title: string; date: string; author?: string; featuredMedia?: string; featuredImage?: string;
+    }>({
+      source: mdxSource,
+      components,
+      options: { parseFrontmatter: true },
+    });
+    return <Layout frontmatter={frontmatter}>{content}</Layout>;
+  } catch (error: any) {
+    return (
+      <div>
+        <h1>Error Compiling Post</h1>
+        <pre>Slug: {params.slug}</pre>
+        <pre>Error: {error.message}</pre>
+      </div>
+    );
+  }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
- if (params.slug === '${mostRecentPostSlug}') {
-  // Attempt to parse frontmatter to get a better title if possible
-  // NOTE: This is basic parsing, might fail on complex frontmatter
-  let title = '${mostRecentPostTitle.replace(/'/g, "\\'")}'; // Default title
-  try {
-    const fmRegex = /^---\\s*([\\s\\S]*?)\\s*---/;
-    const match = mdxSource.match(fmRegex);
-    if (match && match[1]) {
-        const yamlString = match[1];
-        const titleLine = yamlString.split('\\n').find(line => line.startsWith('title:'));
-        if (titleLine) {
-           title = titleLine.substring(titleLine.indexOf(':') + 1).trim().replace(/^['"]|['"]$/g, '');
-        }
-    }
-  } catch(e) { /* Ignore parsing errors, use default title */ }
-  return { title: title.replace(/'/g, "\\\\'") }; // Escape quotes for final output
- }
- return { title: 'Post Not Found' };
-}`
+export async function generateMetadata() {
+  return { title: '${mostRecentPostTitle.replace(/'/g, "\\'")}' };
+}
+`
     archive.append(Buffer.from(postPageContent, 'utf8'), {
       name: `app/posts/${mostRecentPostSlug}/page.tsx`,
     })
-    console.log('Added single post page.')
 
-    console.log('Adding components/Layout.tsx...')
     await addTemplateFile('components/Layout.tsx', 'components/Layout.tsx')
 
-    console.log(`Adding theme-specific assets for theme: ${theme}...`)
-    const themeCssSource = path.join(templateDir, 'themes', theme, 'theme.css')
-    const themeCssDest = 'app/theme.css'
+    const themeCssSrc = path.join(templateDir, 'themes', theme, 'theme.css')
+    archive.file(themeCssSrc, { name: 'app/theme.css' })
 
-    try {
-      await fs.access(themeCssSource)
-      archive.file(themeCssSource, { name: themeCssDest })
-      console.log(`Added theme CSS: ${themeCssDest} from theme '${theme}'`)
-    } catch (err: any) {
-      console.error(
-        `❌ CRITICAL ERROR: Theme CSS not found for theme '${theme}': ${themeCssSource}`
-      )
-      reject(
-        new Error(
-          `Missing theme CSS for theme '${theme}'. Build cannot proceed.`
-        )
-      )
-      return
-    }
-
-    console.log('Adding static project files...')
     const staticFiles = [
-      { src: 'tailwind.config.ts', dest: 'tailwind.config.ts' },
-      { src: 'postcss.config.mjs', dest: 'postcss.config.mjs' },
-      { src: 'tsconfig.json', dest: 'tsconfig.json' },
-      { src: 'next.config.mjs', dest: 'next.config.mjs' },
-      { src: 'vercel.json', dest: 'vercel.json' },
-      { src: 'package.json', dest: 'package.json' },
-      { src: '.gitignore', dest: '.gitignore' },
-      { src: 'app/layout.tsx', dest: 'app/layout.tsx' },
-      { src: 'app/globals.css', dest: 'app/globals.css' },
-    ]
+      ['tailwind.config.ts', 'tailwind.config.ts'],
+      ['postcss.config.mjs', 'postcss.config.mjs'],
+      ['tsconfig.json', 'tsconfig.json'],
+      ['next.config.mjs', 'next.config.mjs'],
+      ['vercel.json', 'vercel.json'],
+      ['package.json', 'package.json'],
+      ['.gitignore', '.gitignore'],
+      ['app/layout.tsx', 'app/layout.tsx'],
+      ['app/globals.css', 'app/globals.css'],
+    ] as const
 
-    for (const file of staticFiles) {
-      await addTemplateFile(file.src, file.dest)
-    }
+    for (const [src, dest] of staticFiles) await addTemplateFile(src, dest)
 
     const publicDir = path.join(templateDir, 'public')
     try {
       await fs.access(publicDir)
-      console.log('Adding public directory contents...')
       archive.directory(publicDir, 'public')
-    } catch (err: any) {
-      if (err.code === 'ENOENT') {
-        console.log('No public directory found in templates, skipping.')
-      } else {
-        console.error('Error accessing template public directory:', err)
-        reject(
-          new Error(`Error accessing template public directory: ${err.message}`)
-        )
-      }
-    }
+    } catch {}
 
-    console.log('Finalizing ZIP archive...')
     await archive.finalize()
-    console.log('ZIP archive finalized successfully.')
   })
 }
