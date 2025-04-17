@@ -116,3 +116,7 @@ body {
 .prose :where(pre code):not(:where([class~="not-prose"] *)) { background-color: transparent!important; padding: 0!important; font-size: inherit!important; }
 
 .prose :where(em):not(:where([class~="not-prose"] *)) { font-style: italic; color: #475569; }
+/* hide duplicate top‑level H1 that follows the layout header */
+.prose > h1:first-of-type {
+  display: none;
+}

@@ -82,3 +82,7 @@ body {
 .prose :where(ul,ol):not(:where([class~="not-prose"] *)) { margin: 1rem 0; }
 .prose :where(li):not(:where([class~="not-prose"] *)) { margin: .25rem 0; }
 .prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) { margin: 1.5em 0 .75em; }
+/* hide duplicate top‑level H1 that follows the layout header */
+.prose > h1:first-of-type {
+  display: none;
+}

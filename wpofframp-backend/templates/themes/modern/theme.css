@@ -139,4 +139,8 @@ body {
  
  .prose :where(strong):not(:where([class~="not-prose"] *)) { font-weight: 700; color: #334155; }
  .dark .prose :where(strong):not(:where([class~="not-prose"] *)) { color: var(--tw-prose-invert-bold); }
+ /* hide duplicate top‑level H1 that follows the layout header */
+.prose > h1:first-of-type {
+   display: none;
+ }
  
