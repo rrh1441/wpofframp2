@@ -1,0 +1,165 @@
+/* templates/themes/ghibli/theme.css */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Playfair+Display:wght@400..900&display=swap');
+
+@layer base {
+  /* Define Font Variables */
+  :root {
+    --font-playfair: "Playfair Display", serif;
+    --font-lora: "Lora", serif;
+  }
+
+  /* Body styles with gradient and pattern */
+  body {
+    /* Base color */
+    background-color: #e6f0f8;
+    /* Gradient overlay + SVG pattern */
+    background-image:
+      linear-gradient(to bottom, rgba(230, 240, 252, 0.7) 0%, rgba(198, 218, 245, 0.8) 100%),
+      url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M87.5 50c0-11.47-3.49-21.93-9.25-30.18-.88-1.29-2.55-1.7-3.83-.8l-3.72 2.5c-1 .67-1.38 1.94-.93 3 1.5 3.5 2.23 7.44 2.23 12C71.99 49.19 64.85 61 55 66.39c-.83.45-1.3 1.37-1.17 2.3l1 5.42c.23 1.27 1.4 2.17 2.67 2 .25 0 .5-.02.75-.05C76.83 72.5 87.5 62.41 87.5 50zM50 87.5c-11.47 0-21.93-3.49-30.18-9.25-1.29-.88-1.7-2.55-.8-3.83l2.5-3.72c.67-1 1.94-1.38 3-.93 3.5 1.5 7.44 2.23 12 2.23 13.38 0 24.83-7.13 30.55-17.01.45-.83 1.37-1.3 2.3-1.17l5.42 1c1.27.23 2.17 1.4 2 2.67 0 .25-.02.5-.05.75-3.33 15.57-18.09 28.76-26.74 28.76zm-3.98-13.13L41.5 70.67c-1-.67-1.38-1.94-.93-3 1.5-3.5 2.23-7.44 2.23-12 0-13.38-7.13-24.83-17.01-30.55-.83-.45-1.3-1.37-1.17-2.3l1-5.42c.23-1.27 1.4-2.17 2.67-2 .25 0 .5.02.75-.05 15.57 3.33 28.76 18.09 28.76 26.74 0 11.47-3.49 21.93-9.25 30.18-.88 1.29-2.55 1.7-3.83.8zM12.5 50c0 11.47 3.49 21.93 9.25 30.18.88 1.29 2.55 1.7 3.83.8l3.72-2.5c1-.67 1.38-1.94.93-3-1.5-3.5-2.23-7.44-2.23-12 0-13.38 7.13-24.83 17.01-30.55.83-.45 1.3-1.37-1.17-2.3l-1-5.42c-.23-1.27-1.4-2.17-2.67-2 0-.25.02-.5.05-.75C25.17 27.5 12.5 37.59 12.5 50z' fill='%23ffffff' fill-opacity='0.3' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+    background-repeat: repeat;
+    font-family: var(--font-lora), Georgia, serif;
+    color: #334155; /* Default text color */
+  }
+
+  /* Style overrides for Tailwind Typography (.prose) */
+  .prose {
+    --tw-prose-body: #334155; /* slate-700 */
+    --tw-prose-headings: #1e3a8a; /* blue-800 */
+    --tw-prose-lead: #475569; /* slate-600 */
+    --tw-prose-links: #2563eb; /* blue-600 */
+    --tw-prose-bold: #1e40af; /* blue-800 */
+    --tw-prose-counters: #475569;
+    --tw-prose-bullets: #93c5fd; /* blue-300 */
+    --tw-prose-hr: #bae6fd; /* sky-200 */
+    --tw-prose-quotes: #334155;
+    --tw-prose-quote-borders: #93c5fd; /* blue-300 */
+    --tw-prose-captions: #475569;
+    --tw-prose-code: #0369a1; /* cyan-700 */
+    --tw-prose-pre-code: #0369a1;
+    --tw-prose-pre-bg: #f0f9ff; /* sky-50 */
+    --tw-prose-th-borders: #e0f2fe; /* sky-100 */
+    --tw-prose-td-borders: #e0f2fe;
+    /* Invert variables likely not needed as base theme is light */
+  }
+
+  /* Apply specific fonts from theme */
+  .prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) {
+    font-family: var(--font-playfair), serif;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Heading underlines */
+   .prose :where(h1, h2):not(:where([class~="not-prose"] *)) {
+      position: relative;
+      padding-bottom: 0.5rem; /* Space for the underline */
+   }
+  .prose :where(h1):not(:where([class~="not-prose"] *))::after,
+  .prose :where(h2):not(:where([class~="not-prose"] *))::after {
+      content: "";
+      position: absolute;
+      bottom: 0; /* Adjusted from -0.5rem */
+      left: 0;
+      width: 100%;
+      max-width: 60px;
+      height: 2px;
+      background: linear-gradient(to right, #93c5fd, transparent);
+  }
+
+
+  /* Base text styles */
+  .prose {
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+  .prose :where(p, li, blockquote):not(:where([class~="not-prose"] *)) {
+     font-family: var(--font-lora), Georgia, serif;
+  }
+
+   /* Link styling */
+  .prose :where(a):not(:where([class~="not-prose"] *)) {
+     text-decoration-line: underline;
+     text-decoration-style: wavy;
+     text-decoration-color: #93c5fd; /* blue-300 */
+     transition: color 0.3s ease, text-decoration-color 0.3s ease;
+   }
+  .prose :where(a):not(:where([class~="not-prose"] *)):hover {
+     color: #1d4ed8; /* blue-700 */
+     text-decoration-color: #60a5fa; /* blue-400 */
+  }
+
+  /* Image styling */
+  .prose :where(img):not(:where([class~="not-prose"] *)) {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 4px solid white;
+  }
+
+  /* List styling */
+  .prose :where(ul, ol):not(:where([class~="not-prose"] *)) {
+    margin-top: 1.2rem;
+    margin-bottom: 1.2rem;
+    margin-left: 1.5rem; /* Tailwind prose might handle this */
+    padding-left: 1rem;
+  }
+  .prose :where(li):not(:where([class~="not-prose"] *)) {
+     margin-top: 0.5rem;
+     margin-bottom: 0.5rem;
+     padding-left: 0.25rem;
+  }
+
+  /* Blockquote styling */
+  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+     /* border-left-color handled by --tw-prose-quote-borders */
+     padding: 1rem 1.5rem;
+     margin-top: 2rem;
+     margin-bottom: 2rem;
+     font-style: italic;
+     background-color: rgba(224, 242, 254, 0.5); /* sky-100 with opacity */
+     border-radius: 0 0.5rem 0.5rem 0;
+     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+
+   /* Code styling */
+   .prose :where(code):not(:where([class~="not-prose"] *))::before,
+   .prose :where(code):not(:where([class~="not-prose"] *))::after {
+       content: none; /* Remove default backticks added by prose */
+   }
+   .prose :where(code):not(pre code):not(:where([class~="not-prose"] *)) {
+      background-color: #e0f2fe; /* sky-100 */
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-family: monospace;
+      font-size: 0.9em;
+      font-weight: normal;
+       /* color handled by --tw-prose-code */
+   }
+    .prose :where(pre):not(:where([class~="not-prose"] *)) {
+      /* background handled by --tw-prose-pre-bg */
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid #bae6fd; /* sky-200 */
+      box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+    }
+    .prose :where(pre code):not(:where([class~="not-prose"] *)) {
+       background-color: transparent !important;
+       padding: 0 !important;
+       /* color handled by --tw-prose-pre-code */
+       font-size: inherit !important;
+    }
+
+   /* Emphasis styling */
+   .prose :where(em):not(:where([class~="not-prose"] *)) {
+      font-style: italic;
+      color: #475569; /* slate-600 */
+   }
+   /* Strong styling handled by --tw-prose-bold */
+
+}

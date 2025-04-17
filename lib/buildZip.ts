@@ -91,6 +91,7 @@ export async function buildZip({
       }
     }
 
+    // --- Generate Content Files ---
     console.log(
       `Generating app/page.mdx using fetched content for theme ${theme}...`
     )
@@ -98,11 +99,6 @@ export async function buildZip({
       name: 'app/page.mdx',
     })
     console.log('Added app/page.mdx with actual content.')
-
-    console.log(
-      `Adding template app/page.tsx (loads page.mdx) for theme ${theme}...`
-    )
-    await addTemplateFile('app/page.tsx', 'app/page.tsx')
 
     console.log(
       `Generating single post page at app/posts/${mostRecentPostSlug}/page.tsx...`
@@ -150,13 +146,18 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     })
     console.log('Added single post page.')
 
+    // --- Add Generic Template Files ---
+    console.log(
+      `Adding template app/page.tsx (loads page.mdx) for theme ${theme}...`
+    )
+    await addTemplateFile('app/page.tsx', 'app/page.tsx')
+
     console.log('Adding components/Layout.tsx...')
     await addTemplateFile('components/Layout.tsx', 'components/Layout.tsx')
 
-    console.log('Skipping PostCard component addition.')
-
     console.log('Adding static project files...')
     const staticFiles = [
+      // Configs
       { src: 'tailwind.config.ts', dest: 'tailwind.config.ts' },
       { src: 'postcss.config.mjs', dest: 'postcss.config.mjs' },
       { src: 'tsconfig.json', dest: 'tsconfig.json' },
@@ -164,14 +165,37 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       { src: 'vercel.json', dest: 'vercel.json' },
       { src: 'package.json', dest: 'package.json' },
       { src: '.gitignore', dest: '.gitignore' },
-      { src: 'app/layout.tsx', dest: 'app/layout.tsx' },
-      { src: 'app/globals.css', dest: 'app/globals.css' },
+      // Root App files
+      { src: 'app/layout.tsx', dest: 'app/layout.tsx' }, // This one now imports theme.css
+      { src: 'app/globals.css', dest: 'app/globals.css' }, // Base Tailwind/global styles
     ]
 
     for (const file of staticFiles) {
       await addTemplateFile(file.src, file.dest)
     }
 
+    // --- Add Theme-Specific CSS ---
+    console.log(`Adding theme-specific assets for theme: ${theme}...`)
+    const themeCssSource = path.join(templateDir, 'themes', theme, 'theme.css')
+    const themeCssDest = 'app/theme.css' // Destination within the ZIP
+
+    try {
+      await fs.access(themeCssSource)
+      archive.file(themeCssSource, { name: themeCssDest })
+      console.log(`Added theme CSS: ${themeCssDest} from theme '${theme}'`)
+    } catch (err: any) {
+      console.error(
+        `❌ CRITICAL ERROR: Theme CSS not found for theme '${theme}': ${themeCssSource}`
+      )
+      reject(
+        new Error(
+          `Missing theme CSS for theme '${theme}'. Build cannot proceed.`
+        )
+      )
+      return // Stop processing if theme CSS is missing
+    }
+
+    // --- Add Public Assets ---
     const publicDir = path.join(templateDir, 'public')
     try {
       await fs.access(publicDir)
@@ -188,6 +212,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       }
     }
 
+    // --- Finalize Archive ---
     console.log('Finalizing ZIP archive...')
     await archive.finalize()
     console.log('ZIP archive finalized successfully.')
