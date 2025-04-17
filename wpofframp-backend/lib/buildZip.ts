@@ -4,37 +4,33 @@ import archiver from 'archiver'
 import { Writable } from 'stream'
 import { ThemeKey } from './constants'
 
-// Define the structure for homepage post data passed to the function
 interface HomepagePostData {
   id: number
   title: string
-  link: string // Used for slug generation
+  link: string
   excerpt: string
   featuredMediaUrl: string | null
   authorName: string
-  date: string // ISO 8601 string
+  date: string
 }
 
-// Define the arguments for the buildZip function
 interface BuildZipArgs {
   theme: ThemeKey
-  homepagePosts: HomepagePostData[] // Array of posts (only first might have MDX, but we use metadata here)
-  mostRecentPostMdx: string // Full MDX for the latest post (used for the single post page)
-  mostRecentPostTitle: string // Title for the single post page
-  mostRecentPostSlug: string // Slug for the single post page route
+  homepagePosts: HomepagePostData[]
+  mostRecentPostMdx: string
+  mostRecentPostTitle: string
+  mostRecentPostSlug: string
 }
 
-// Helper function to generate slugs consistently
 const generateSlug = (title: string, id: number): string => {
   return (
     title
       ?.replace(/[^a-z0-9]+/gi, '-')
       .toLowerCase()
       .substring(0, 50) || `post-${id}`
-  ) // Basic slug generation, ensure it matches link target
+  )
 }
 
-// Helper function for basic HTML stripping (used inside generated TSX)
 const stripHtml = (html: string): string => {
   if (typeof html !== 'string') return ''
   return html.replace(/<[^>]*>?/gm, '')
@@ -69,7 +65,6 @@ export async function buildZip({
     })
     archive.pipe(converter)
 
-    // --- Helper to add files from template directory ---
     const addTemplateFile = async (sourcePath: string, archivePath: string) => {
       const fullSourcePath = path.join(templateDir, sourcePath)
       try {
@@ -83,10 +78,9 @@ export async function buildZip({
           )
           const criticalFiles = [
             'components/Layout.tsx',
-            'app/layout.tsx', // Still need this template
+            'app/layout.tsx',
             'app/globals.css',
             'package.json',
-            // 'app/page.tsx' is no longer copied, it's generated
           ]
           if (criticalFiles.includes(sourcePath)) {
             reject(
@@ -110,18 +104,16 @@ export async function buildZip({
       }
     }
 
-    // --- 1. Generate app/page.tsx (Homepage) Dynamically Based on Theme ---
     console.log(`Generating app/page.tsx for theme: ${theme}...`)
     let homepageContent = ''
-    const postsDataString = JSON.stringify(homepagePosts, null, 2) // Embed post data
+    const postsDataString = JSON.stringify(homepagePosts, null, 2)
 
-    // Common imports and helper functions for generated page.tsx
     const commonImports = `
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 
-const postsData: any[] = ${postsDataString}; // Embed the data
+const postsData: any[] = ${postsDataString};
 
 const generateSlug = (title: string, id: number): string => {
   return (title?.replace(/[^a-z0-9]+/gi, '-').toLowerCase().substring(0, 50) || \`post-\${id}\`);
@@ -148,7 +140,7 @@ const formatDateDistance = (isoDate: string): string => {
 ${commonImports}
 
 export default function HomePage() {
-  const hostname = "matrix-site"; // Example hostname
+  const hostname = "matrix-site";
   const promptUser = "visitor";
   const promptString = \`\${promptUser}@\${hostname}:~$\`;
 
@@ -162,15 +154,14 @@ export default function HomePage() {
         <div className="grid gap-0">
           {postsData.length > 0 ? (
             postsData.map((post, index) => {
+              const isLinkActive = index === 0; // <<< Fix: Define isLinkActive
               const slug = generateSlug(post.title, post.id);
-              // Only link to the most recent post page as others aren't generated
-              const postLink = index === 0 ? \`/posts/\${slug}\` : '#'; // Link only first post
-              const isLinkActive = index === 0;
+              const postLink = isLinkActive ? \`/posts/\${slug}\` : '#';
               const formattedDate = formatDateDistance(post.date);
               const cleanExcerpt = stripHtml(post.excerpt);
 
               return (
-                <div key={post.id} className="border border-green-700 bg-black/50 p-4 rounded mb-4 ${isLinkActive ? 'hover:bg-black/80 transition-colors cursor-pointer' : 'opacity-70 cursor-default'}">
+                <div key={post.id} className={\`border border-green-700 bg-black/50 p-4 rounded mb-4 \${isLinkActive ? 'hover:bg-black/80 transition-colors cursor-pointer' : 'opacity-70 cursor-default'}\`}>
                   <div className="text-xs mb-1 overflow-hidden whitespace-nowrap text-ellipsis">
                     <span className="text-green-300">file://</span>
                     <span className="text-green-500">{slug}.mdx</span>
@@ -215,28 +206,26 @@ export default function HomePage() {
         break
 
       case 'ghibli':
-      case 'modern': // Use similar card structure for both, styling differs via CSS
+      case 'modern':
       default:
         homepageContent = `// app/page.tsx (Generated for ${theme} Theme)
 ${commonImports}
 
 export default function HomePage() {
-  // Basic card structure, styling primarily driven by theme.css + globals.css
   return (
     <main className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-8 border-b pb-2">Latest Posts</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {postsData.length > 0 ? (
           postsData.map((post, index) => {
+            const isLinkActive = index === 0; // <<< Fix: Define isLinkActive
             const slug = generateSlug(post.title, post.id);
-            // Only link to the most recent post page as others aren't generated
-            const postLink = index === 0 ? \`/posts/\${slug}\` : '#';
-            const isLinkActive = index === 0;
+            const postLink = isLinkActive ? \`/posts/\${slug}\` : '#';
             const formattedDate = formatDateDistance(post.date);
             const cleanExcerpt = stripHtml(post.excerpt);
 
             const cardContent = (
-              <div className="border rounded-lg overflow-hidden shadow-md flex flex-col h-full bg-card text-card-foreground ${isLinkActive ? 'hover:shadow-lg transition-shadow cursor-pointer' : 'opacity-80 cursor-default'}">
+              <div className={\`border rounded-lg overflow-hidden shadow-md flex flex-col h-full bg-card text-card-foreground \${isLinkActive ? 'hover:shadow-lg transition-shadow cursor-pointer' : 'opacity-80 cursor-default'}\`}>
                 {post.featuredMediaUrl && (
                   <div className="relative aspect-video overflow-hidden bg-muted">
                     <Image
@@ -245,7 +234,7 @@ export default function HomePage() {
                        fill
                        style={{ objectFit: 'cover' }}
                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                       priority={index < 3} // Prioritize loading images for first few cards
+                       priority={index < 3}
                     />
                   </div>
                 )}
@@ -292,8 +281,6 @@ export default function HomePage() {
     })
     console.log(`Added generated app/page.tsx for theme ${theme}.`)
 
-    // --- 2. Generate Single Post Page (app/posts/[slug]/page.tsx) ---
-    // This uses mostRecentPostMdx and remains the same as before
     console.log(
       `Generating single post page at app/posts/${mostRecentPostSlug}/page.tsx...`
     )
@@ -340,14 +327,12 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     })
     console.log('Added single post page.')
 
-    // --- 3. Add Generic Layout Component ---
     console.log('Adding components/Layout.tsx...')
     await addTemplateFile('components/Layout.tsx', 'components/Layout.tsx')
 
-    // --- 4. Add Theme-Specific CSS ---
     console.log(`Adding theme-specific assets for theme: ${theme}...`)
     const themeCssSource = path.join(templateDir, 'themes', theme, 'theme.css')
-    const themeCssDest = 'app/theme.css' // Destination within the ZIP
+    const themeCssDest = 'app/theme.css'
 
     try {
       await fs.access(themeCssSource)
@@ -362,13 +347,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
           `Missing theme CSS for theme '${theme}'. Build cannot proceed.`
         )
       )
-      return // Stop processing if theme CSS is missing
+      return
     }
 
-    // --- 5. Add Static Project Files (Common to all themes) ---
     console.log('Adding static project files...')
     const staticFiles = [
-      // Configs
       { src: 'tailwind.config.ts', dest: 'tailwind.config.ts' },
       { src: 'postcss.config.mjs', dest: 'postcss.config.mjs' },
       { src: 'tsconfig.json', dest: 'tsconfig.json' },
@@ -376,16 +359,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       { src: 'vercel.json', dest: 'vercel.json' },
       { src: 'package.json', dest: 'package.json' },
       { src: '.gitignore', dest: '.gitignore' },
-      // Root App files
-      { src: 'app/layout.tsx', dest: 'app/layout.tsx' }, // This one imports theme.css
-      { src: 'app/globals.css', dest: 'app/globals.css' }, // Base Tailwind/global styles
+      { src: 'app/layout.tsx', dest: 'app/layout.tsx' },
+      { src: 'app/globals.css', dest: 'app/globals.css' },
     ]
 
     for (const file of staticFiles) {
       await addTemplateFile(file.src, file.dest)
     }
 
-    // --- 6. Add Public Assets ---
     const publicDir = path.join(templateDir, 'public')
     try {
       await fs.access(publicDir)
@@ -402,7 +383,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       }
     }
 
-    // --- Finalize Archive ---
     console.log('Finalizing ZIP archive...')
     await archive.finalize()
     console.log('ZIP archive finalized successfully.')

@@ -1,0 +1,25 @@
+{
+    "name": "wpofframp-backend",
+    "version": "1.0.0",
+    "description": "Backend service for WP Offramp ZIP generation",
+    "main": "dist/server.js",
+    "type": "commonjs",
+    "scripts": {
+      "build": "tsc",
+      "start": "node dist/server.js",
+      "dev": "ts-node server.ts"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "archiver": "^7.0.1",
+      "date-fns": "^3.6.0"
+    },
+    "devDependencies": {
+      "@types/archiver": "^6.0.3",
+      "@types/node": "^20.14.13",  
+      "ts-node": "^10.9.2",
+      "typescript": "^5.5.4" 
+    }
+  }

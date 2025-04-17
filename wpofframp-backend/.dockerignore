@@ -1,0 +1,21 @@
+# Node dependencies
+node_modules
+
+# Build output
+dist
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files (allow example)
+.env*
+!.env.example
+
+# OS generated files
+.DS_Store
+._*
+Thumbs.db

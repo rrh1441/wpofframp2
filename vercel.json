@@ -1,9 +1,4 @@
 {
   "buildCommand": "next build",
-  "outputDirectory": ".next",
-  "functions": {
-    "app/api/**/route.ts": {
-      "includeFiles": "templates/**"
-    }
-  }
+  "outputDirectory": ".next"
 }
