@@ -1,142 +1,190 @@
 /* templates/themes/modern/theme.css */
 
 body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-    /* Base background/text colors handled by Tailwind globals.css */
-  }
-  
-  /* Style overrides for Tailwind Typography (.prose) */
-  .prose {
-    --tw-prose-body: #475569; /* slate-600 */
-    --tw-prose-headings: #334155; /* slate-700 */
-    --tw-prose-lead: #475569;
-    --tw-prose-links: #2563eb; /* blue-600 */
-    --tw-prose-bold: #334155; /* slate-700 */
-    --tw-prose-counters: #64748b; /* slate-500 */
-    --tw-prose-bullets: #cbd5e1; /* slate-300 */
-    --tw-prose-hr: #e2e8f0; /* slate-200 */
-    --tw-prose-quotes: #64748b; /* slate-500 */
-    --tw-prose-quote-borders: #e2e8f0; /* slate-200 */
-    --tw-prose-captions: #64748b;
-    --tw-prose-code: #4338ca; /* indigo-700 */
-    --tw-prose-pre-code: #3730a3; /* indigo-800 */
-    --tw-prose-pre-bg: #f8fafc; /* slate-50 */
-    --tw-prose-th-borders: #e2e8f0;
-    --tw-prose-td-borders: #e2e8f0;
-    /* Dark mode handled by Tailwind `dark:` prefix or separate CSS if needed */
-    --tw-prose-invert-body: #d1d5db; /* gray-300 */
-    --tw-prose-invert-headings: #f9fafb; /* gray-50 */
-    --tw-prose-invert-lead: #9ca3af; /* gray-400 */
-    --tw-prose-invert-links: #60a5fa; /* blue-400 */
-    --tw-prose-invert-bold: #f9fafb;
-    --tw-prose-invert-counters: #9ca3af;
-    --tw-prose-invert-bullets: #4b5563; /* gray-600 */
-    --tw-prose-invert-hr: #374151; /* gray-700 */
-    --tw-prose-invert-quotes: #d1d5db;
-    --tw-prose-invert-quote-borders: #374151;
-    --tw-prose-invert-captions: #9ca3af;
-    --tw-prose-invert-code: #a5b4fc; /* indigo-300 */
-    --tw-prose-invert-pre-code: #c7d2fe; /* indigo-200 */
-    --tw-prose-invert-pre-bg: #1f2937; /* gray-800 */
-    --tw-prose-invert-th-borders: #4b5563;
-    --tw-prose-invert-td-borders: #4b5563;
-  }
-  
-   /* Specific adjustments based on ModernLayout styles */
-   .prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) {
-      font-weight: 600; /* Semibold */
-      line-height: 1.2;
-   }
-  
-   .prose :where(p):not(:where([class~="not-prose"] *)) {
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-      line-height: 1.6;
-   }
-  
-   .prose :where(a):not(:where([class~="not-prose"] *)) {
-      text-decoration: none;
-      font-weight: 500; /* Medium weight */
-   }
-   .prose :where(a):not(:where([class~="not-prose"] *)):hover {
-      /* color: #1d4ed8; */ /* Handled by prose hover */
-      text-decoration: underline;
-   }
-  
-    .prose :where(img):not(:where([class~="not-prose"] *)) {
-      margin-top: 1.5rem;
-      margin-bottom: 1.5rem;
-      border-radius: 0.25rem; /* Slightly rounded */
-   }
-  
-   .prose :where(ul, ol):not(:where([class~="not-prose"] *)) {
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-      margin-left: 1.5rem; /* Tailwind prose might handle this */
-      padding-left: 1rem;
-   }
-   .prose :where(li):not(:where([class~="not-prose"] *)) {
-      margin-top: 0.25rem;
-      margin-bottom: 0.25rem;
-   }
-  
-   .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-      /* border-left-color handled by --tw-prose-quote-borders */
-      padding-left: 1rem;
-      margin-top: 1.5rem;
-      margin-bottom: 1.5rem;
-      font-style: italic;
-      /* color handled by --tw-prose-quotes */
-   }
-  
-    /* Code styling */
-    .prose :where(code):not(:where([class~="not-prose"] *))::before,
-    .prose :where(code):not(:where([class~="not-prose"] *))::after {
-        content: none; /* Remove default backticks added by prose */
-    }
-    .prose :where(code):not(pre code):not(:where([class~="not-prose"] *)) {
-      background-color: #f1f5f9; /* slate-100 */
-      padding: 0.2rem 0.4rem;
-      border-radius: 0.25rem;
-      font-family: monospace;
-      font-size: 0.875rem;
-      font-weight: normal;
-      /* color handled by --tw-prose-code */
-    }
-     .prose :where(pre):not(:where([class~="not-prose"] *)) {
-       /* background handled by --tw-prose-pre-bg */
-       padding: 1rem;
-       border-radius: 0.25rem;
-       margin-top: 1.5rem;
-       margin-bottom: 1.5rem;
-       border: 1px solid #e2e8f0; /* slate-200 */
-     }
-     .prose :where(pre code):not(:where([class~="not-prose"] *)) {
-        background-color: transparent !important;
-        padding: 0 !important;
-        border: none !important; /* Override potential border */
-        font-size: inherit !important;
-         /* color handled by --tw-prose-pre-code */
-     }
-  
-    /* Emphasis styling */
-    .prose :where(em):not(:where([class~="not-prose"] *)) {
-       font-style: italic;
-       /* Color defaults to prose body color */
-    }
-    .prose :where(strong):not(:where([class~="not-prose"] *)) {
-       font-weight: 700; /* Bold */
-       color: #334155; /* slate-700 */
-    }
-  
-     /* Dark mode specific overrides if needed */
-     .dark .prose {
-         /* --tw-prose-body: #d1d5db; */ /* Example override */
-     }
-     .dark .prose :where(code):not(pre code):not(:where([class~="not-prose"] *)) {
-        background-color: #374151; /* gray-700 */
-         /* Dark code color handled by --tw-prose-invert-code */
-     }
-     .dark .prose :where(pre):not(:where([class~="not-prose"] *)) {
-        border: 1px solid #4b5563; /* gray-600 */
-     }
+   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+ }
+ 
+ /* --- Homepage Specific Styles --- */
+ 
+ .news-site-header {
+   border-bottom: 2px solid #000;
+   padding: 1.5rem 0;
+   margin-bottom: 2rem;
+ }
+ .dark .news-site-header {
+   border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+ }
+ .news-site-header .masthead {
+   font-family: "Georgia", serif;
+   font-weight: 900;
+   letter-spacing: -0.03em;
+   text-transform: none;
+   line-height: 0.9;
+ }
+ .news-site-header .date-line {
+   font-family: system-ui, -apple-system, sans-serif;
+   font-size: 0.875rem;
+   color: #666;
+   letter-spacing: 0.05em;
+ }
+ .dark .news-site-header .date-line {
+   color: #999;
+ }
+ 
+ .modern-featured-card .featured-post-gradient {
+   background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%);
+ }
+ .modern-featured-card .author-avatar {
+   border: 2px solid white;
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+ }
+ .dark .modern-featured-card .author-avatar {
+   border: 2px solid hsl(var(--background));
+ }
+ .modern-featured-title {
+   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ }
+ 
+ .modern-card {
+   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+ }
+ .modern-card.cursor-pointer:hover {
+   transform: translateY(-4px);
+   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+ }
+ .dark .modern-card.cursor-pointer:hover {
+   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+ }
+ .modern-card .author-avatar {
+   border: 2px solid transparent;
+ }
+ .modern-card-title {
+   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ }
+ 
+ .modern-section-title {
+   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ }
+ 
+ /* --- Prose Styles (for Single Post Page) --- */
+ 
+ .prose {
+   --tw-prose-body: #475569;
+   --tw-prose-headings: #334155;
+   --tw-prose-lead: #475569;
+   --tw-prose-links: #2563eb;
+   --tw-prose-bold: #334155;
+   --tw-prose-counters: #64748b;
+   --tw-prose-bullets: #cbd5e1;
+   --tw-prose-hr: #e2e8f0;
+   --tw-prose-quotes: #64748b;
+   --tw-prose-quote-borders: #e2e8f0;
+   --tw-prose-captions: #64748b;
+   --tw-prose-code: #4338ca;
+   --tw-prose-pre-code: #3730a3;
+   --tw-prose-pre-bg: #f8fafc;
+   --tw-prose-th-borders: #e2e8f0;
+   --tw-prose-td-borders: #e2e8f0;
+   /* Dark mode */
+   --tw-prose-invert-body: #d1d5db;
+   --tw-prose-invert-headings: #f9fafb;
+   --tw-prose-invert-lead: #9ca3af;
+   --tw-prose-invert-links: #60a5fa;
+   --tw-prose-invert-bold: #f9fafb;
+   --tw-prose-invert-counters: #9ca3af;
+   --tw-prose-invert-bullets: #4b5563;
+   --tw-prose-invert-hr: #374151;
+   --tw-prose-invert-quotes: #d1d5db;
+   --tw-prose-invert-quote-borders: #374151;
+   --tw-prose-invert-captions: #9ca3af;
+   --tw-prose-invert-code: #a5b4fc;
+   --tw-prose-invert-pre-code: #c7d2fe;
+   --tw-prose-invert-pre-bg: #1f2937;
+   --tw-prose-invert-th-borders: #4b5563;
+   --tw-prose-invert-td-borders: #4b5563;
+ }
+ 
+ /* Specific prose adjustments */
+ .prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"] *)) {
+   font-weight: 600;
+   line-height: 1.2;
+ }
+ 
+ .prose :where(p):not(:where([class~="not-prose"] *)) {
+   margin-top: 1rem;
+   margin-bottom: 1rem;
+   line-height: 1.6;
+ }
+ 
+ .prose :where(a):not(:where([class~="not-prose"] *)) {
+   text-decoration: none;
+   font-weight: 500;
+ }
+ .prose :where(a):not(:where([class~="not-prose"] *)):hover {
+   text-decoration: underline;
+ }
+ 
+ .prose :where(img):not(:where([class~="not-prose"] *)) {
+   margin-top: 1.5rem;
+   margin-bottom: 1.5rem;
+   border-radius: 0.25rem;
+ }
+ 
+ .prose :where(ul, ol):not(:where([class~="not-prose"] *)) {
+   margin-top: 1rem;
+   margin-bottom: 1rem;
+ }
+ .prose :where(li):not(:where([class~="not-prose"] *)) {
+   margin-top: 0.25rem;
+   margin-bottom: 0.25rem;
+ }
+ 
+ .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+   padding-left: 1rem;
+   margin-top: 1.5rem;
+   margin-bottom: 1.5rem;
+   font-style: italic;
+ }
+ 
+ .prose :where(code):not(:where([class~="not-prose"] *))::before,
+ .prose :where(code):not(:where([class~="not-prose"] *))::after {
+   content: none;
+ }
+ .prose :where(code):not(pre code):not(:where([class~="not-prose"] *)) {
+   background-color: #f1f5f9;
+   padding: 0.2rem 0.4rem;
+   border-radius: 0.25rem;
+   font-family: monospace;
+   font-size: 0.875rem;
+   font-weight: normal;
+ }
+ .dark .prose :where(code):not(pre code):not(:where([class~="not-prose"] *)) {
+   background-color: #374151;
+ }
+ .prose :where(pre):not(:where([class~="not-prose"] *)) {
+   padding: 1rem;
+   border-radius: 0.25rem;
+   margin-top: 1.5rem;
+   margin-bottom: 1.5rem;
+   border: 1px solid #e2e8f0;
+ }
+ .dark .prose :where(pre):not(:where([class~="not-prose"] *)) {
+   border: 1px solid #4b5563;
+ }
+ .prose :where(pre code):not(:where([class~="not-prose"] *)) {
+   background-color: transparent !important;
+   padding: 0 !important;
+   border: none !important;
+   font-size: inherit !important;
+ }
+ 
+ .prose :where(em):not(:where([class~="not-prose"] *)) {
+   font-style: italic;
+ }
+ .prose :where(strong):not(:where([class~="not-prose"] *)) {
+   font-weight: 700;
+   color: #334155;
+ }
+ .dark .prose :where(strong):not(:where([class~="not-prose"] *)) {
+   color: var(--tw-prose-invert-bold);
+ }
