@@ -31,26 +31,27 @@ export async function buildZip({
   mostRecentPostSlug,
 }: BuildZipArgs): Promise<Buffer> {
   return new Promise(async (resolve, reject) => {
-    /* ------------------------------------------------------------------ */
-    /*  archive stream                                                    */
-    /* ------------------------------------------------------------------ */
-    const out: Buffer[] = [];
-    const converter = new Writable({
-      write(c, _e, d) {
-        out.push(c);
-        d();
+    /* --------------------------------------------------------------- */
+    /*  streaming ZIP setup                                           */
+    /* --------------------------------------------------------------- */
+    const chunks: Buffer[] = [];
+    const sink = new Writable({
+      write(chunk, _enc, next) {
+        chunks.push(chunk);
+        next();
       },
     });
-    converter.on('finish', () => resolve(Buffer.concat(out)));
+    sink.on('finish', () => resolve(Buffer.concat(chunks)));
 
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('error', (err) =>
       reject(new Error(`ZIP failure: ${err.message}`)),
     );
-    archive.pipe(converter);
+    archive.pipe(sink);
 
     const templateDir = path.join(process.cwd(), 'templates');
-    const addTemplate = async (
+
+    const copyTemplate = async (
       src: string,
       dest: string,
       critical = false,
@@ -65,9 +66,9 @@ export async function buildZip({
       }
     };
 
-    /* ------------------------------------------------------------------ */
-    /*  helper code injected into page                                    */
-    /* ------------------------------------------------------------------ */
+    /* --------------------------------------------------------------- */
+    /*  data helpers injected into page                               */
+    /* --------------------------------------------------------------- */
     const demoPosts = homepagePosts.slice(0, 3); // hero + 2 cards
     const postsJson = JSON.stringify(demoPosts, null, 2);
 
@@ -77,6 +78,8 @@ import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 
 const postsData = ${postsJson};
+
+const latestSlug = '${mostRecentPostSlug}';
 
 const generateSlug = (title: string, id: number) =>
   (title?.replace(/[^a-z0-9]+/gi, '-').toLowerCase().substring(0, 50) ||
@@ -96,14 +99,14 @@ const siteName = (() => {
 })();
 `;
 
-    /* ------------------------------------------------------------------ */
-    /*  build home page string                                            */
-    /* ------------------------------------------------------------------ */
-    let homeSrc = '';
+    /* --------------------------------------------------------------- */
+    /*  build homepage component                                      */
+    /* --------------------------------------------------------------- */
+    let pageSrc = '';
 
-    /* ===== MATRIX (unchanged list) ==================================== */
+    /* ---------- MATRIX list layout --------------------------------- */
     if (theme === 'matrix') {
-      homeSrc = `// app/page.tsx (Matrix)
+      pageSrc = `// app/page.tsx (Matrix)
 ${helpers}
 
 export default function HomePage() {
@@ -114,9 +117,10 @@ export default function HomePage() {
       <header className="text-2xl font-bold mb-8">{siteName}</header>
 
       {postsData.map((p, i) => {
-        const slug = generateSlug(p.title, p.id);
+        const slug = i === 0 ? latestSlug : generateSlug(p.title, p.id);
         const isHero = i === 0;
         const link = isHero ? \`/posts/\${slug}\` : '#';
+
         return (
           <div key={p.id}
                className={\`theme-card matrix-card border border-green-700 bg-black/50 p-4 rounded mb-6 \${isHero ? 'matrix-card-active hover:bg-black/80 cursor-pointer' : 'opacity-70 cursor-default'}\`}>
@@ -161,23 +165,20 @@ export default function HomePage() {
 }
 `;
     } else {
-      /* ===== GHIBLI / MODERN – hero + two half‑width cards ============= */
-      homeSrc = `// app/page.tsx (${theme})
+      /* ---------- Ghibli / Modern hero + half‑width grid -------------- */
+      pageSrc = `// app/page.tsx (${theme})
 ${helpers}
 
 export default function HomePage() {
-  const t = '${theme}'; // theme key for class names
+  const t = '${theme}';
   const [hero, ...cards] = postsData;
-
-  const heroSlug = generateSlug(hero.title, hero.id);
-  const heroLink = \`/posts/\${heroSlug}\`;
 
   return (
     <main className={\`container mx-auto p-4 md:p-8 space-y-12 \${t}-homepage\`}>
       <header className="site-header text-3xl font-bold mb-8">{siteName}</header>
 
-      {/* ---------- HERO (full width) ---------- */}
-      <Link href={heroLink} className="block">
+      {/* HERO --------------------------------------------------------- */}
+      <Link href={\`/posts/\${latestSlug}\`} className="block">
         <article className={\`\${t}-featured-card relative rounded-lg overflow-hidden aspect-video cursor-pointer\`}>
           {hero.featuredMediaUrl && (
             <Image
@@ -204,16 +205,13 @@ export default function HomePage() {
         </article>
       </Link>
 
-      {/* ---------- GRID: next 2 posts, half width each ---------- */}
+      {/* GRID ---------------------------------------------------------- */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {cards.map((p) => {
           const slug = generateSlug(p.title, p.id);
-          const link = \`/posts/\${slug}\`;
           return (
-            <Link key={p.id} href={link} className="block h-full">
-              <article
-                className={\`theme-card \${t}-card border rounded-lg overflow-hidden shadow-md flex flex-col h-full bg-card text-card-foreground theme-card-active hover:shadow-lg transition-shadow\`}
-              >
+            <Link key={p.id} href={\`/posts/\${slug}\`} className="block h-full">
+              <article className={\`theme-card \${t}-card border rounded-lg overflow-hidden shadow-md flex flex-col h-full bg-card text-card-foreground theme-card-active hover:shadow-lg transition-shadow\`}>
                 {p.featuredMediaUrl && (
                   <div className="relative aspect-video bg-muted overflow-hidden">
                     <Image
@@ -251,11 +249,11 @@ export default function HomePage() {
 `;
     }
 
-    archive.append(Buffer.from(homeSrc, 'utf8'), { name: 'app/page.tsx' });
+    archive.append(Buffer.from(pageSrc, 'utf8'), { name: 'app/page.tsx' });
 
-    /* ------------------------------------------------------------------ */
-    /*  single post page                                                  */
-    /* ------------------------------------------------------------------ */
+    /* --------------------------------------------------------------- */
+    /*  single‑post page                                              */
+    /* --------------------------------------------------------------- */
     const postSrc = `// app/posts/${mostRecentPostSlug}/page.tsx
 import { compileMDX } from 'next-mdx-remote/rsc';
 import Layout from '@/components/Layout';
@@ -264,16 +262,12 @@ export async function generateStaticParams() {
   return [{ slug: '${mostRecentPostSlug}' }];
 }
 
-export default async function PostPage({ params }: { params: { slug: string } }) {
-  if (params.slug !== '${mostRecentPostSlug}') return <div>Post not found.</div>;
-
+export default async function PostPage() {
   const mdx = \`${mostRecentPostMdx.replace(/`/g, '\\`')}\`;
-
   const { content, frontmatter } = await compileMDX({
     source: mdx,
     options: { parseFrontmatter: true },
   });
-
   return <Layout frontmatter={frontmatter}>{content}</Layout>;
 }
 
@@ -285,21 +279,23 @@ export async function generateMetadata() {
       name: `app/posts/${mostRecentPostSlug}/page.tsx`,
     });
 
-    /* ------------------------------------------------------------------ */
-    /*  templates, css, assets                                            */
-    /* ------------------------------------------------------------------ */
-    await addTemplate('components/Layout.tsx', 'components/Layout.tsx', true);
-
+    /* --------------------------------------------------------------- */
+    /*  theme CSS                                                      */
+    /* --------------------------------------------------------------- */
     archive.file(
       path.join(templateDir, 'themes', theme, 'theme.css'),
       { name: 'app/theme.css' },
     );
 
+    /* --------------------------------------------------------------- */
+    /*  copy template files (except next.config.mjs)                   */
+    /* --------------------------------------------------------------- */
+    await copyTemplate('components/Layout.tsx', 'components/Layout.tsx', true);
+
     const staticFiles: Array<[string, string, boolean?]> = [
       ['tailwind.config.ts', 'tailwind.config.ts', true],
       ['postcss.config.mjs', 'postcss.config.mjs', true],
       ['tsconfig.json', 'tsconfig.json', true],
-      ['next.config.mjs', 'next.config.mjs', true],
       ['vercel.json', 'vercel.json', true],
       ['package.json', 'package.json', true],
       ['.gitignore', '.gitignore'],
@@ -307,14 +303,45 @@ export async function generateMetadata() {
       ['app/globals.css', 'app/globals.css', true],
     ];
     for (const [src, dest, crit] of staticFiles)
-      await addTemplate(src, dest, !!crit);
+      await copyTemplate(src, dest, !!crit);
 
+    /* --------------------------------------------------------------- */
+    /*  generate next.config.mjs with image domains                    */
+    /* --------------------------------------------------------------- */
+    const imageDomains = Array.from(
+      new Set(
+        homepagePosts
+          .map((p) => {
+            try {
+              return p.featuredMediaUrl
+                ? new URL(p.featuredMediaUrl).hostname
+                : null;
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean) as string[],
+      ),
+    );
+
+    const nextCfg = `/** Auto‑generated by buildZip */
+const nextConfig = {
+  experimental: { appDir: true },
+  images: { domains: ${JSON.stringify(imageDomains)} },
+};
+export default nextConfig;
+`;
+    archive.append(Buffer.from(nextCfg, 'utf8'), { name: 'next.config.mjs' });
+
+    /* --------------------------------------------------------------- */
+    /*  optional /public assets                                        */
+    /* --------------------------------------------------------------- */
     const publicDir = path.join(templateDir, 'public');
     try {
       await fs.access(publicDir);
       archive.directory(publicDir, 'public');
     } catch {
-      /* no public dir – optional */
+      /* no public dir — optional */
     }
 
     await archive.finalize();
