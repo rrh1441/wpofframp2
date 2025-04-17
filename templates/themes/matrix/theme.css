@@ -1,121 +1,119 @@
 /* templates/themes/matrix/theme.css */
 
-@layer base {
-    body {
-      background-color: #000000;
-      color: #00ff00; /* Bright green default text */
-      font-family: 'Courier New', Courier, monospace;
-    }
-  
-    /* Basic scrollbar styling */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #000;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #0f0; /* Use a slightly darker green for thumb */
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #00ff00; /* Brighter green on hover */
-    }
-  
-    /* Style overrides for Tailwind Typography (.prose) */
-    .prose {
-      /* Set base prose color to a less intense green for readability */
-      --tw-prose-body: #86efac;
-      --tw-prose-headings: #4ade80; /* Brighter green for headings */
-      --tw-prose-lead: #86efac;
-      --tw-prose-links: #22c55e; /* Medium green for links */
-      --tw-prose-bold: #86efac; /* Use body green for bold */
-      --tw-prose-counters: #4ade80;
-      --tw-prose-bullets: #4ade80;
-      --tw-prose-hr: #166534; /* Dark green border */
-      --tw-prose-quotes: #86efac;
-      --tw-prose-quote-borders: #166534; /* Dark green border */
-      --tw-prose-captions: #86efac;
-      --tw-prose-code: #4ade80; /* Brighter green for inline code */
-      --tw-prose-pre-code: #4ade80;
-      --tw-prose-pre-bg: #111111; /* Very dark grey for code blocks */
-      --tw-prose-th-borders: #166534;
-      --tw-prose-td-borders: #166534;
-      /* Invert colors (already dark) - these might not be needed */
-      --tw-prose-invert-body: #86efac;
-      --tw-prose-invert-headings: #4ade80;
-      --tw-prose-invert-lead: #86efac;
-      --tw-prose-invert-links: #22c55e;
-      --tw-prose-invert-bold: #86efac;
-      --tw-prose-invert-counters: #4ade80;
-      --tw-prose-invert-bullets: #4ade80;
-      --tw-prose-invert-hr: #166534;
-      --tw-prose-invert-quotes: #86efac;
-      --tw-prose-invert-quote-borders: #166534;
-      --tw-prose-invert-captions: #86efac;
-      --tw-prose-invert-code: #4ade80;
-      --tw-prose-invert-pre-code: #4ade80;
-      --tw-prose-invert-pre-bg: #111111;
-      --tw-prose-invert-th-borders: #166534;
-      --tw-prose-invert-td-borders: #166534;
-    }
-  
-    /* Apply monospace font to all prose elements */
-    .prose :where(h1,h2,h3,h4,h5,h6,p,ul,ol,li,blockquote,a,strong,em,code,pre):not(:where([class~="not-prose"] *)) {
-      font-family: 'Courier New', Courier, monospace;
-    }
-  
-     /* Specific adjustments based on MatrixLayout dangerousSetInnerHTML styles */
-    .prose :where(a):not(:where([class~="not-prose"] *)) {
-      text-decoration: underline;
-    }
-    .prose :where(a):not(:where([class~="not-prose"] *)):hover {
-       color: #16a34a; /* Darker green on link hover */
-    }
-  
-    .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-      font-style: italic;
-      /* border-left-color is handled by --tw-prose-quote-borders */
-    }
-  
-    .prose :where(pre):not(:where([class~="not-prose"] *)) {
-      border: 1px solid #166534;
-      border-radius: 0.25rem;
-      padding: 1rem;
-      /* background and color handled by --tw-prose-pre-bg and --tw-prose-pre-code */
-    }
-     .prose :where(code):not(:where([class~="not-prose"] *))::before,
-     .prose :where(code):not(:where([class~="not-prose"] *))::after {
-         content: none; /* Remove default backticks added by prose */
-     }
-  
-     .prose :where(code):not(pre code):not(:where([class~="not-prose"] *)) {
-        background-color: #111; /* Match pre background for inline */
-        padding: 0.2rem 0.4rem;
-        border-radius: 0.25rem;
-        font-weight: normal; /* Override prose bolding if any */
-        /* color handled by --tw-prose-code */
-     }
-  
-    .prose :where(img):not(:where([class~="not-prose"] *)) {
-        border: 1px solid #166534; /* Dark green border */
-        margin-top: 1.5rem;
-        margin-bottom: 1.5rem;
-     }
-     /* Ensure default prose line height isn't too large */
-     .prose {
-       line-height: 1.6;
-     }
-     .prose :where(p):not(:where([class~="not-prose"] *)) {
-       margin-top: 1rem;
-       margin-bottom: 1rem;
-     }
-     .prose :where(ul, ol):not(:where([class~="not-prose"] *)) {
-       margin-top: 1rem;
-       margin-bottom: 1rem;
-     }
-      .prose :where(li):not(:where([class~="not-prose"] *)) {
-       margin-top: 0.25rem;
-       margin-bottom: 0.25rem;
-     }
+body {
+    background-color: #000000;
+    color: #00ff00; /* Bright green default text */
+    font-family: 'Courier New', Courier, monospace;
   }
+  
+  /* Basic scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #0f0; /* Use a slightly darker green for thumb */
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #00ff00; /* Brighter green on hover */
+  }
+  
+  /* Style overrides for Tailwind Typography (.prose) */
+  .prose {
+    /* Set base prose color to a less intense green for readability */
+    --tw-prose-body: #86efac;
+    --tw-prose-headings: #4ade80; /* Brighter green for headings */
+    --tw-prose-lead: #86efac;
+    --tw-prose-links: #22c55e; /* Medium green for links */
+    --tw-prose-bold: #86efac; /* Use body green for bold */
+    --tw-prose-counters: #4ade80;
+    --tw-prose-bullets: #4ade80;
+    --tw-prose-hr: #166534; /* Dark green border */
+    --tw-prose-quotes: #86efac;
+    --tw-prose-quote-borders: #166534; /* Dark green border */
+    --tw-prose-captions: #86efac;
+    --tw-prose-code: #4ade80; /* Brighter green for inline code */
+    --tw-prose-pre-code: #4ade80;
+    --tw-prose-pre-bg: #111111; /* Very dark grey for code blocks */
+    --tw-prose-th-borders: #166534;
+    --tw-prose-td-borders: #166534;
+    /* Invert colors (already dark) - these might not be needed */
+    --tw-prose-invert-body: #86efac;
+    --tw-prose-invert-headings: #4ade80;
+    --tw-prose-invert-lead: #86efac;
+    --tw-prose-invert-links: #22c55e;
+    --tw-prose-invert-bold: #86efac;
+    --tw-prose-invert-counters: #4ade80;
+    --tw-prose-invert-bullets: #4ade80;
+    --tw-prose-invert-hr: #166534;
+    --tw-prose-invert-quotes: #86efac;
+    --tw-prose-invert-quote-borders: #166534;
+    --tw-prose-invert-captions: #86efac;
+    --tw-prose-invert-code: #4ade80;
+    --tw-prose-invert-pre-code: #4ade80;
+    --tw-prose-invert-pre-bg: #111111;
+    --tw-prose-invert-th-borders: #166534;
+    --tw-prose-invert-td-borders: #166534;
+  }
+  
+  /* Apply monospace font to all prose elements */
+  .prose :where(h1,h2,h3,h4,h5,h6,p,ul,ol,li,blockquote,a,strong,em,code,pre):not(:where([class~="not-prose"] *)) {
+    font-family: 'Courier New', Courier, monospace;
+  }
+  
+   /* Specific adjustments based on MatrixLayout dangerousSetInnerHTML styles */
+  .prose :where(a):not(:where([class~="not-prose"] *)) {
+    text-decoration: underline;
+  }
+  .prose :where(a):not(:where([class~="not-prose"] *)):hover {
+     color: #16a34a; /* Darker green on link hover */
+  }
+  
+  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+    font-style: italic;
+    /* border-left-color is handled by --tw-prose-quote-borders */
+  }
+  
+  .prose :where(pre):not(:where([class~="not-prose"] *)) {
+    border: 1px solid #166534;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    /* background and color handled by --tw-prose-pre-bg and --tw-prose-pre-code */
+  }
+   .prose :where(code):not(:where([class~="not-prose"] *))::before,
+   .prose :where(code):not(:where([class~="not-prose"] *))::after {
+       content: none; /* Remove default backticks added by prose */
+   }
+  
+   .prose :where(code):not(pre code):not(:where([class~="not-prose"] *)) {
+      background-color: #111; /* Match pre background for inline */
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-weight: normal; /* Override prose bolding if any */
+      /* color handled by --tw-prose-code */
+   }
+  
+  .prose :where(img):not(:where([class~="not-prose"] *)) {
+      border: 1px solid #166534; /* Dark green border */
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+   }
+   /* Ensure default prose line height isn't too large */
+   .prose {
+     line-height: 1.6;
+   }
+   .prose :where(p):not(:where([class~="not-prose"] *)) {
+     margin-top: 1rem;
+     margin-bottom: 1rem;
+   }
+   .prose :where(ul, ol):not(:where([class~="not-prose"] *)) {
+     margin-top: 1rem;
+     margin-bottom: 1rem;
+   }
+    .prose :where(li):not(:where([class~="not-prose"] *)) {
+     margin-top: 0.25rem;
+     margin-bottom: 0.25rem;
+   }
