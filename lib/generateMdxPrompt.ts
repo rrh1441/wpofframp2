@@ -20,7 +20,7 @@ export function generateMdxPrompt({
 }: GenerateMdxPromptArgs): string {
   if (!isValidTheme(theme)) {
     console.warn(`Invalid theme provided: ${theme}. Falling back to clarity.`);
-    theme = 'clarity'; // Fallback to a default theme
+    theme = 'clarity'; // Fallbac k to a de fault theme
   }
 
   const basePrompt = `
