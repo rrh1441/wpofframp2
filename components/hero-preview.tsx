@@ -104,7 +104,7 @@ export default function HeroPreview() {
     const handleExampleClick = useCallback(async (site: { name: string, url: string }) => { if (isLoading || isMigrating || isCheckingApi) return; const targetUrl = normalizeUrl(site.url); setUrl(targetUrl); setHomepagePosts([]); setFetchError(null); setMigrationError(null); setResultsUrl(null); setDisplayedSiteName(null); setIsModalOpen(false); setModalPostContent(null); const apiOk = await checkApi(targetUrl); if (apiOk) { await fetchHomepagePreview(targetUrl, site.name); } }, [isLoading, isMigrating, isCheckingApi, checkApi, fetchHomepagePreview]);
     const handlePostCardClick = useCallback((postIndex: number) => { if (postIndex === 0 && homepagePosts[0]?.fullContent?.mdx) { const post = homepagePosts[0]; setModalPostContent({ title: post.title, mdx: post.fullContent.mdx, id: post.id, link: post.link }); setIsModalOpen(true); } else if (postIndex > 0) { toast.dismiss(); toast("Full preview only available for the most recent post.", { duration: 4000, position: 'bottom-center' }); } else { toast.error("Could not load post content for preview.", { duration: 3000 }); } }, [homepagePosts]);
 
-    // --- MODIFIED handleMigrate Function ---
+    // --- UPDATED handleMigrate Function ---
     const handleMigrate = async () => {
         const mostRecentPost = homepagePosts[0];
         // Frontend check for required data
@@ -117,14 +117,21 @@ export default function HeroPreview() {
         setMigrationError(null);
         setFetchError(null); // Clear other errors when starting migration
         try {
-            // Construct the payload with the CORRECT key 'homepagePosts'
+            // Construct the payload with ALL required fields
             const payload = {
                 wpUrl: resultsUrl,
                 theme: activeTheme,
-                homepagePosts: homepagePosts.map((p, i) => ({ // Use 'homepagePosts' key
-                    ...p,
-                    // Only include fullContent for the first post to match backend expectation implicitly
-                    fullContent: i === 0 ? p.fullContent : undefined
+                mostRecentPostMdx: mostRecentPost.fullContent.mdx,
+                mostRecentPostTitle: mostRecentPost.title,
+                mostRecentPostSlug: mostRecentPost.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase().substring(0, 50) || `post-${mostRecentPost.id}`,
+                homepagePosts: homepagePosts.map(p => ({
+                    id: p.id,
+                    title: p.title,
+                    link: p.link,
+                    excerpt: p.excerpt,
+                    featuredMediaUrl: p.featuredMediaUrl,
+                    authorName: p.authorName,
+                    date: p.date
                 }))
             };
 
@@ -185,7 +192,7 @@ export default function HeroPreview() {
             setIsMigrating(false);
         }
     };
-    // --- END MODIFIED handleMigrate Function ---
+    // --- END UPDATED handleMigrate Function ---
 
     const renderSkeleton = () => ( <div className="p-6 space-y-4 animate-pulse"><Skeleton className="h-8 w-3/4" /><Skeleton className="h-4 w-1/2" /><div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start"><div className="lg:col-span-2 space-y-4"><Skeleton className="h-80 w-full" /><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-5/6" /></div><div className="space-y-6 lg:space-y-8"><div className="space-y-3"><Skeleton className="h-48 w-full" /><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-5/6" /></div><div className="space-y-3"><Skeleton className="h-48 w-full" /><Skeleton className="h-5 w-full" /><Skeleton className="h-5 w-5/6" /></div></div></div></div> );
     const renderPreviewArea = () => { const ActiveLayout = themeLayoutMap[activeTheme]; const nameToPass = displayedSiteName || "Website Preview"; if (isCheckingApi || isLoading) { return renderSkeleton(); } if (apiCheckStatus === 'error' && !isCheckingApi) { return renderSkeleton(); } if (fetchError && !isLoading) { return (<div className="p-4 md:p-6"><Alert variant="destructive"><AlertCircle className="h-4 w-4" /> <AlertTitle>Preview Error</AlertTitle><AlertDescription>{fetchError}</AlertDescription></Alert></div>); } if ((resultsUrl && homepagePosts.length === 0 && !isLoading && !fetchError) || isLoading) { return renderSkeleton(); } if (!resultsUrl && url && !fetchError) { return (<div className="text-center py-10 text-muted-foreground">Click "Generate Previews".</div>); } if (!resultsUrl && !url) { return (<div className="text-center py-10 text-muted-foreground">Enter site URL & click "Generate Previews".</div>); } if (ActiveLayout && homepagePosts.length > 0) { return <ActiveLayout posts={homepagePosts} onClickPost={handlePostCardClick} websiteName={nameToPass} />; } if (!ActiveLayout) return (<div className="p-4 text-red-600">Error: Theme layout component missing.</div>); return renderSkeleton(); };
